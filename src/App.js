@@ -19,19 +19,46 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
-// Brand colours
-const COLORS = {
-  rustyRed: '#c45d3a',
-  rustyRedLight: '#f5e6e0',
-  rustyRedDark: '#a34428',
-  softBlue: '#5b8fa6',
-  softBlueLight: '#e8f1f5',
-  softBlueDark: '#3d6b80',
-  cream: '#fdf9f3',
-  warmWhite: '#ffffff',
-  textDark: '#2d2926',
-  textMuted: '#6b5f58',
-  border: '#e8ddd4',
+// Theme configurations
+const THEMES = {
+  light: {
+    background: '#fafafa',
+    surface: '#ffffff',
+    surfaceHover: '#f5f5f5',
+    blue: '#2563eb',
+    blueLight: '#eff6ff',
+    blueDark: '#1d4ed8',
+    orange: '#f97316',
+    orangeLight: '#fff7ed',
+    amber: '#f59e0b',
+    amberLight: '#fffbeb',
+    text: '#171717',
+    textMuted: '#737373',
+    textLight: '#a3a3a3',
+    border: '#e5e5e5',
+    borderLight: '#f5f5f5',
+    headerBg: '#ffffff',
+    headerBorder: '#e5e5e5',
+  },
+  dark: {
+    background: '#0a0a0a',
+    surface: '#171717',
+    surfaceHover: '#262626',
+    blue: '#3b82f6',
+    blueLight: '#1e3a5f',
+    blueDark: '#60a5fa',
+    orange: '#fb923c',
+    orangeLight: '#431407',
+    amber: '#fbbf24',
+    amberLight: '#422006',
+    text: '#fafafa',
+    textMuted: '#a3a3a3',
+    textLight: '#737373',
+    border: '#262626',
+    borderLight: '#1f1f1f',
+    headerBg: '#171717',
+    headerBorder: '#262626',
+  }
 };
 
 // Complete Bible data with exact verse counts for all 66 books
@@ -129,20 +156,14 @@ const formatVerseRef = (verse) => {
 // Reg's encouraging messages
 const REG_MESSAGES = {
   emptyState: [
-    "Ah, a fresh start! Every great library begins with a single quote. What wisdom shall we preserve first?",
-    "Welcome to your personal treasury of wisdom! I've got my reading glasses on and I'm ready when you are.",
-    "Pull up a chair, friend! Let's start collecting those gems you've discovered in your reading.",
+    "Every great library begins with a single quote. What wisdom shall we preserve first?",
+    "Ready when you are! Let's start collecting those gems you've discovered in your reading.",
+    "Pull up a chair, friend. Let's build your treasury of wisdom together.",
   ],
   noResults: [
-    "Hmm, I've checked every shelf but couldn't find that one. Perhaps try different words?",
-    "My spectacles must be foggy — I can't seem to find a match. Shall we try another search?",
-    "That's a tricky one! I've looked high and low but no luck yet.",
-  ],
-  greeting: [
-    "Lovely to see you!",
-    "Welcome back, friend!",
-    "Ah, there you are!",
-    "Good to see you again!",
+    "Hmm, couldn't find that one. Perhaps try different words?",
+    "No matches yet — shall we try another search?",
+    "That's a tricky one! I've looked high and low but no luck.",
   ],
 };
 
@@ -151,129 +172,39 @@ const getRandomMessage = (type) => {
   return messages[Math.floor(Math.random() * messages.length)];
 };
 
-// ============================================
-// REG CHARACTER SVG COMPONENT
-// ============================================
+// Theme context
+const useTheme = () => {
+  const [themeMode, setThemeMode] = useState(() => {
+    return localStorage.getItem('reg-theme') || 'system';
+  });
+  
+  const [resolvedTheme, setResolvedTheme] = useState('light');
 
-const RegCharacter = ({ size = 120, className = "" }) => {
-  return (
-    <svg 
-      width={size} 
-      height={size} 
-      viewBox="0 0 120 120" 
-      fill="none" 
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-    >
-      {/* Background circle */}
-      <circle cx="60" cy="60" r="58" fill={COLORS.softBlueLight} stroke={COLORS.softBlue} strokeWidth="2"/>
-      
-      {/* Cardigan/body */}
-      <path d="M30 95 Q30 75 45 70 L60 68 L75 70 Q90 75 90 95 L90 120 L30 120 Z" fill={COLORS.softBlue}/>
-      
-      {/* Cardigan opening/shirt */}
-      <path d="M50 70 L50 95 L60 98 L70 95 L70 70 Z" fill={COLORS.cream}/>
-      
-      {/* Bow tie */}
-      <path d="M52 72 L56 75 L52 78 Z" fill={COLORS.rustyRed}/>
-      <path d="M68 72 L64 75 L68 78 Z" fill={COLORS.rustyRed}/>
-      <circle cx="60" cy="75" r="3" fill={COLORS.rustyRedDark}/>
-      
-      {/* Head */}
-      <ellipse cx="60" cy="45" rx="28" ry="30" fill="#f5dcc8"/>
-      
-      {/* Rosy cheeks */}
-      <ellipse cx="38" cy="50" rx="6" ry="4" fill="#e8b0a0" opacity="0.6"/>
-      <ellipse cx="82" cy="50" rx="6" ry="4" fill="#e8b0a0" opacity="0.6"/>
-      
-      {/* Ears */}
-      <ellipse cx="32" cy="45" rx="5" ry="7" fill="#f5dcc8"/>
-      <ellipse cx="88" cy="45" rx="5" ry="7" fill="#f5dcc8"/>
-      
-      {/* Balding head with white hair on sides */}
-      <ellipse cx="60" cy="25" rx="20" ry="12" fill="#f5dcc8"/>
-      <path d="M30 35 Q25 30 28 22 Q32 18 38 20 Q35 28 32 35 Z" fill="#e8e4e0"/>
-      <path d="M90 35 Q95 30 92 22 Q88 18 82 20 Q85 28 88 35 Z" fill="#e8e4e0"/>
-      
-      {/* Eyebrows */}
-      <path d="M42 35 Q48 32 54 35" stroke="#a09080" strokeWidth="2" strokeLinecap="round" fill="none"/>
-      <path d="M66 35 Q72 32 78 35" stroke="#a09080" strokeWidth="2" strokeLinecap="round" fill="none"/>
-      
-      {/* Glasses */}
-      <circle cx="48" cy="43" r="10" fill="none" stroke={COLORS.rustyRedDark} strokeWidth="2"/>
-      <circle cx="72" cy="43" r="10" fill="none" stroke={COLORS.rustyRedDark} strokeWidth="2"/>
-      <path d="M58 43 L62 43" stroke={COLORS.rustyRedDark} strokeWidth="2"/>
-      <path d="M38 41 L32 38" stroke={COLORS.rustyRedDark} strokeWidth="2"/>
-      <path d="M82 41 L88 38" stroke={COLORS.rustyRedDark} strokeWidth="2"/>
-      
-      {/* Eyes behind glasses */}
-      <circle cx="48" cy="44" r="3" fill={COLORS.textDark}/>
-      <circle cx="72" cy="44" r="3" fill={COLORS.textDark}/>
-      <circle cx="49" cy="43" r="1" fill="white"/>
-      <circle cx="73" cy="43" r="1" fill="white"/>
-      
-      {/* Friendly smile */}
-      <path d="M50 58 Q60 66 70 58" stroke={COLORS.rustyRedDark} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-      
-      {/* Nose */}
-      <path d="M60 48 Q63 52 60 56 Q57 52 60 48" fill="#e8c4b0"/>
-    </svg>
-  );
-};
+  useEffect(() => {
+    const updateResolvedTheme = () => {
+      if (themeMode === 'system') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setResolvedTheme(prefersDark ? 'dark' : 'light');
+      } else {
+        setResolvedTheme(themeMode);
+      }
+    };
 
-// Small Reg for header
-const RegCharacterSmall = ({ size = 40 }) => {
-  return (
-    <svg 
-      width={size} 
-      height={size} 
-      viewBox="0 0 120 120" 
-      fill="none" 
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Background circle */}
-      <circle cx="60" cy="60" r="58" fill={COLORS.softBlueLight} stroke={COLORS.softBlue} strokeWidth="3"/>
-      
-      {/* Cardigan/body */}
-      <path d="M30 95 Q30 75 45 70 L60 68 L75 70 Q90 75 90 95 L90 120 L30 120 Z" fill={COLORS.softBlue}/>
-      
-      {/* Cardigan opening/shirt */}
-      <path d="M50 70 L50 95 L60 98 L70 95 L70 70 Z" fill={COLORS.cream}/>
-      
-      {/* Bow tie */}
-      <path d="M52 72 L56 75 L52 78 Z" fill={COLORS.rustyRed}/>
-      <path d="M68 72 L64 75 L68 78 Z" fill={COLORS.rustyRed}/>
-      <circle cx="60" cy="75" r="3" fill={COLORS.rustyRedDark}/>
-      
-      {/* Head */}
-      <ellipse cx="60" cy="45" rx="28" ry="30" fill="#f5dcc8"/>
-      
-      {/* Rosy cheeks */}
-      <ellipse cx="38" cy="50" rx="6" ry="4" fill="#e8b0a0" opacity="0.6"/>
-      <ellipse cx="82" cy="50" rx="6" ry="4" fill="#e8b0a0" opacity="0.6"/>
-      
-      {/* Ears */}
-      <ellipse cx="32" cy="45" rx="5" ry="7" fill="#f5dcc8"/>
-      <ellipse cx="88" cy="45" rx="5" ry="7" fill="#f5dcc8"/>
-      
-      {/* Balding head with white hair */}
-      <ellipse cx="60" cy="25" rx="20" ry="12" fill="#f5dcc8"/>
-      <path d="M30 35 Q25 30 28 22 Q32 18 38 20 Q35 28 32 35 Z" fill="#e8e4e0"/>
-      <path d="M90 35 Q95 30 92 22 Q88 18 82 20 Q85 28 88 35 Z" fill="#e8e4e0"/>
-      
-      {/* Glasses */}
-      <circle cx="48" cy="43" r="10" fill="none" stroke={COLORS.rustyRedDark} strokeWidth="3"/>
-      <circle cx="72" cy="43" r="10" fill="none" stroke={COLORS.rustyRedDark} strokeWidth="3"/>
-      <path d="M58 43 L62 43" stroke={COLORS.rustyRedDark} strokeWidth="3"/>
-      
-      {/* Eyes */}
-      <circle cx="48" cy="44" r="4" fill={COLORS.textDark}/>
-      <circle cx="72" cy="44" r="4" fill={COLORS.textDark}/>
-      
-      {/* Smile */}
-      <path d="M50 58 Q60 66 70 58" stroke={COLORS.rustyRedDark} strokeWidth="3" strokeLinecap="round" fill="none"/>
-    </svg>
-  );
+    updateResolvedTheme();
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', updateResolvedTheme);
+    
+    return () => mediaQuery.removeEventListener('change', updateResolvedTheme);
+  }, [themeMode]);
+
+  useEffect(() => {
+    localStorage.setItem('reg-theme', themeMode);
+  }, [themeMode]);
+
+  const colors = THEMES[resolvedTheme];
+  
+  return { themeMode, setThemeMode, resolvedTheme, colors };
 };
 
 // ============================================
@@ -281,46 +212,46 @@ const RegCharacterSmall = ({ size = 40 }) => {
 // ============================================
 
 // Sign In Screen
-const SignInScreen = ({ onSignIn, loading }) => {
+const SignInScreen = ({ onSignIn, loading, colors }) => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ backgroundColor: COLORS.cream }}>
+    <div 
+      className="min-h-screen flex flex-col items-center justify-center p-6"
+      style={{ backgroundColor: colors.background, fontFamily: 'Inter, system-ui, sans-serif' }}
+    >
       <div className="max-w-md w-full text-center">
-        {/* Reg Character - Large */}
-        <div className="mb-6 animate-bounce-slow">
-          <RegCharacter size={140} />
+        {/* Logo */}
+        <div className="mb-8">
+          <div 
+            className="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center shadow-sm"
+            style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+          >
+            <span className="text-4xl">📖</span>
+          </div>
+          <h1 
+            className="text-3xl font-semibold mb-2"
+            style={{ color: colors.text }}
+          >
+            Reg
+          </h1>
+          <p style={{ color: colors.textMuted }}>
+            Your personal quote companion
+          </p>
         </div>
-        
-        {/* Title */}
-        <h1 
-          className="text-5xl font-bold mb-2"
-          style={{ color: COLORS.rustyRed, fontFamily: 'Georgia, serif' }}
-        >
-          Reg
-        </h1>
-        <p 
-          className="text-lg mb-8"
-          style={{ color: COLORS.textMuted }}
-        >
-          Your friendly quote companion
-        </p>
 
         {/* Welcome message */}
         <div 
-          className="p-6 rounded-2xl mb-8 shadow-lg"
-          style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
+          className="p-6 rounded-2xl mb-8"
+          style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
         >
           <p 
-            className="text-lg mb-4 leading-relaxed"
-            style={{ color: COLORS.textDark, fontFamily: 'Georgia, serif' }}
+            className="text-base leading-relaxed mb-4"
+            style={{ color: colors.text }}
           >
-            "Ah, welcome! Pull up a chair, friend. I'm Reg — I've spent years helping folks like you 
-            collect the finest words from the wisest minds. Shall we build your library together?"
+            Save quotes from books and commentaries, tag them to Bible verses, 
+            and find exactly the right words when preparing your sermons.
           </p>
-          <p 
-            className="text-base"
-            style={{ color: COLORS.textMuted }}
-          >
-            Save quotes, tag them to Bible verses, and find exactly the right words when you need them most.
+          <p style={{ color: colors.textMuted, fontSize: '14px' }}>
+            Your quotes are private and sync across all your devices.
           </p>
         </div>
 
@@ -331,17 +262,17 @@ const SignInScreen = ({ onSignIn, loading }) => {
             onSignIn();
           }}
           disabled={loading}
-          className="w-full py-4 px-6 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+          className="w-full py-4 px-6 rounded-xl font-medium text-base transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
           style={{ 
-            backgroundColor: COLORS.rustyRed, 
-            color: COLORS.cream,
+            backgroundColor: colors.blue, 
+            color: '#ffffff',
           }}
         >
           {loading ? (
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
             <>
-              <svg className="w-6 h-6" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                 <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -357,26 +288,38 @@ const SignInScreen = ({ onSignIn, loading }) => {
 };
 
 // User Menu Component
-const UserMenu = ({ user, onSignOut, isOpen, onClose }) => {
+const UserMenu = ({ user, onSignOut, onOpenSettings, isOpen, onClose, colors }) => {
   if (!isOpen) return null;
   
   return (
     <>
-      {/* Backdrop */}
+      <div className="fixed inset-0 z-40" onClick={onClose} />
       <div 
-        className="fixed inset-0 z-40"
-        onClick={onClose}
-      />
-      
-      {/* Menu */}
-      <div 
-        className="absolute right-4 top-14 z-50 py-2 rounded-xl shadow-xl min-w-48"
-        style={{ backgroundColor: COLORS.warmWhite, border: `1px solid ${COLORS.border}` }}
+        className="absolute right-0 top-12 z-50 py-2 rounded-xl shadow-lg min-w-52"
+        style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
       >
-        <div className="px-4 py-3 border-b" style={{ borderColor: COLORS.border }}>
-          <p className="font-medium" style={{ color: COLORS.textDark }}>{user?.displayName}</p>
-          <p className="text-sm" style={{ color: COLORS.textMuted }}>{user?.email}</p>
+        <div className="px-4 py-3 border-b" style={{ borderColor: colors.border }}>
+          <p className="font-medium text-sm" style={{ color: colors.text }}>{user?.displayName}</p>
+          <p className="text-xs" style={{ color: colors.textMuted }}>{user?.email}</p>
         </div>
+        
+        <button
+          onClick={() => {
+            haptic();
+            onOpenSettings();
+            onClose();
+          }}
+          className="w-full px-4 py-3 text-left flex items-center gap-3 transition-colors text-sm"
+          style={{ color: colors.text }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.surfaceHover}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+          </svg>
+          Settings
+        </button>
         
         <button
           onClick={() => {
@@ -384,10 +327,12 @@ const UserMenu = ({ user, onSignOut, isOpen, onClose }) => {
             onSignOut();
             onClose();
           }}
-          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors"
-          style={{ color: COLORS.rustyRed }}
+          className="w-full px-4 py-3 text-left flex items-center gap-3 transition-colors text-sm"
+          style={{ color: '#ef4444' }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.surfaceHover}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
           </svg>
           Sign out
@@ -397,29 +342,133 @@ const UserMenu = ({ user, onSignOut, isOpen, onClose }) => {
   );
 };
 
+// Settings Modal
+const SettingsModal = ({ isOpen, onClose, themeMode, setThemeMode, colors }) => {
+  if (!isOpen) return null;
+
+  const themeOptions = [
+    { value: 'light', label: 'Light', icon: '☀️' },
+    { value: 'dark', label: 'Dark', icon: '🌙' },
+    { value: 'system', label: 'System', icon: '💻' },
+  ];
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex flex-col"
+      style={{ backgroundColor: colors.background, fontFamily: 'Inter, system-ui, sans-serif' }}
+    >
+      {/* Header */}
+      <div 
+        className="flex items-center justify-between px-4 py-3 border-b"
+        style={{ backgroundColor: colors.headerBg, borderColor: colors.headerBorder }}
+      >
+        <button
+          onClick={() => {
+            haptic();
+            onClose();
+          }}
+          className="p-2 -ml-2 rounded-lg"
+          style={{ color: colors.text }}
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
+        </button>
+        <h2 className="text-lg font-semibold" style={{ color: colors.text }}>
+          Settings
+        </h2>
+        <div className="w-10" />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-lg mx-auto p-4">
+          {/* Appearance section */}
+          <div className="mb-6">
+            <h3 
+              className="text-sm font-medium mb-3 px-1"
+              style={{ color: colors.textMuted }}
+            >
+              Appearance
+            </h3>
+            <div 
+              className="rounded-xl overflow-hidden"
+              style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+            >
+              {themeOptions.map((option, index) => (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    haptic();
+                    setThemeMode(option.value);
+                  }}
+                  className="w-full px-4 py-3 flex items-center justify-between transition-colors"
+                  style={{ 
+                    borderTop: index > 0 ? `1px solid ${colors.border}` : 'none',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.surfaceHover}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{option.icon}</span>
+                    <span style={{ color: colors.text }}>{option.label}</span>
+                  </div>
+                  {themeMode === option.value && (
+                    <svg className="w-5 h-5" fill={colors.blue} viewBox="0 0 24 24">
+                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* About section */}
+          <div>
+            <h3 
+              className="text-sm font-medium mb-3 px-1"
+              style={{ color: colors.textMuted }}
+            >
+              About
+            </h3>
+            <div 
+              className="rounded-xl p-4"
+              style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">📖</span>
+                <div>
+                  <p className="font-semibold" style={{ color: colors.text }}>Reg</p>
+                  <p className="text-sm" style={{ color: colors.textMuted }}>Version 1.0.0</p>
+                </div>
+              </div>
+              <p className="text-sm" style={{ color: colors.textMuted }}>
+                A personal quote index for ministers and theology students. 
+                Save quotes, tag them to Bible verses, and find the right words when you need them.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Header Component
-const Header = ({ user, onSignOut, onAddEntry }) => {
+const Header = ({ user, onSignOut, onAddEntry, onOpenSettings, colors }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   
   return (
     <header 
-      className="sticky top-0 z-40 px-4 py-3 shadow-md"
-      style={{ backgroundColor: COLORS.softBlue }}
+      className="sticky top-0 z-40 px-4 py-3 border-b"
+      style={{ backgroundColor: colors.headerBg, borderColor: colors.headerBorder }}
     >
       <div className="max-w-2xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <RegCharacterSmall size={44} />
-          <div>
-            <h1 
-              className="text-xl font-bold"
-              style={{ color: COLORS.cream, fontFamily: 'Georgia, serif' }}
-            >
-              Reg
-            </h1>
-            <p className="text-xs" style={{ color: COLORS.softBlueLight, opacity: 0.9 }}>
-              {getRandomMessage('greeting')}
-            </p>
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">📖</span>
+          <h1 className="text-xl font-semibold" style={{ color: colors.text }}>
+            Reg
+          </h1>
         </div>
 
         <div className="flex items-center gap-2 relative">
@@ -428,11 +477,11 @@ const Header = ({ user, onSignOut, onAddEntry }) => {
               haptic('success');
               onAddEntry();
             }}
-            className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-md"
-            style={{ backgroundColor: COLORS.rustyRed }}
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:opacity-90 active:scale-95"
+            style={{ backgroundColor: colors.orange }}
             aria-label="Add new entry"
           >
-            <svg className="w-6 h-6" fill="none" stroke={COLORS.cream} strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="#ffffff" strokeWidth="2.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
           </button>
@@ -442,22 +491,24 @@ const Header = ({ user, onSignOut, onAddEntry }) => {
               haptic();
               setMenuOpen(!menuOpen);
             }}
-            className="p-1 rounded-full transition-all duration-200 hover:ring-2 hover:ring-white/30"
+            className="p-1 rounded-full transition-all duration-200"
             aria-label="User menu"
           >
             <img 
-              src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'U')}&background=c45d3a&color=fdf9f3`} 
+              src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'U')}&background=2563eb&color=ffffff`} 
               alt={user?.displayName || 'User'}
-              className="w-9 h-9 rounded-full border-2"
-              style={{ borderColor: COLORS.cream }}
+              className="w-9 h-9 rounded-full"
+              style={{ border: `2px solid ${colors.border}` }}
             />
           </button>
           
           <UserMenu 
             user={user}
             onSignOut={onSignOut}
+            onOpenSettings={onOpenSettings}
             isOpen={menuOpen}
             onClose={() => setMenuOpen(false)}
+            colors={colors}
           />
         </div>
       </div>
@@ -466,15 +517,15 @@ const Header = ({ user, onSignOut, onAddEntry }) => {
 };
 
 // Search Bar Component
-const SearchBar = ({ searchQuery, setSearchQuery }) => {
+const SearchBar = ({ searchQuery, setSearchQuery, colors }) => {
   return (
-    <div className="px-4 py-3" style={{ backgroundColor: COLORS.cream }}>
+    <div className="px-4 py-3" style={{ backgroundColor: colors.background }}>
       <div className="max-w-2xl mx-auto">
         <div 
-          className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-sm"
-          style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl"
+          style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
         >
-          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke={COLORS.softBlue} strokeWidth="2" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke={colors.textLight} strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
           <input
@@ -483,14 +534,15 @@ const SearchBar = ({ searchQuery, setSearchQuery }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-transparent outline-none text-base"
-            style={{ color: COLORS.textDark }}
+            style={{ color: colors.text }}
           />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery('')}
-              className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+              className="p-1 rounded-full transition-colors"
+              style={{ color: colors.textMuted }}
             >
-              <svg className="w-5 h-5" fill="none" stroke={COLORS.textMuted} strokeWidth="2" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
               </svg>
             </button>
@@ -502,22 +554,23 @@ const SearchBar = ({ searchQuery, setSearchQuery }) => {
 };
 
 // Empty State Component
-const EmptyState = ({ onAddEntry, hasSearch }) => {
+const EmptyState = ({ onAddEntry, hasSearch, colors }) => {
   if (hasSearch) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <RegCharacter size={100} className="mb-4 opacity-80" />
-        <h3 
-          className="text-xl font-semibold mb-2"
-          style={{ color: COLORS.textDark, fontFamily: 'Georgia, serif' }}
+        <div 
+          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+          style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
         >
-          Hmm, can't find that one...
+          <svg className="w-8 h-8" fill="none" stroke={colors.textLight} strokeWidth="1.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold mb-2" style={{ color: colors.text }}>
+          No matches found
         </h3>
-        <p 
-          className="text-base max-w-xs"
-          style={{ color: COLORS.textMuted, fontFamily: 'Georgia, serif', fontStyle: 'italic' }}
-        >
-          "{getRandomMessage('noResults')}"
+        <p className="text-sm max-w-xs" style={{ color: colors.textMuted }}>
+          {getRandomMessage('noResults')}
         </p>
       </div>
     );
@@ -525,40 +578,31 @@ const EmptyState = ({ onAddEntry, hasSearch }) => {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-      <RegCharacter size={120} className="mb-6" />
-      
-      <h3 
-        className="text-2xl font-bold mb-4"
-        style={{ color: COLORS.textDark, fontFamily: 'Georgia, serif' }}
+      <div 
+        className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6"
+        style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
       >
-        Your library awaits!
+        <span className="text-4xl">📖</span>
+      </div>
+      
+      <h3 className="text-xl font-semibold mb-2" style={{ color: colors.text }}>
+        Your library awaits
       </h3>
       
-      <div 
-        className="max-w-sm p-5 rounded-2xl mb-6 shadow-md"
-        style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
+      <p 
+        className="text-sm max-w-sm mb-6 leading-relaxed"
+        style={{ color: colors.textMuted }}
       >
-        <p 
-          className="text-base leading-relaxed"
-          style={{ color: COLORS.textDark, fontFamily: 'Georgia, serif', fontStyle: 'italic' }}
-        >
-          "{getRandomMessage('emptyState')}"
-        </p>
-        <p 
-          className="text-sm mt-3 font-medium"
-          style={{ color: COLORS.rustyRed }}
-        >
-          — Reg
-        </p>
-      </div>
+        {getRandomMessage('emptyState')}
+      </p>
       
       <button
         onClick={() => {
           haptic('success');
           onAddEntry();
         }}
-        className="py-3 px-6 rounded-2xl font-semibold shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2"
-        style={{ backgroundColor: COLORS.rustyRed, color: COLORS.cream }}
+        className="py-3 px-5 rounded-xl font-medium transition-all duration-200 hover:opacity-90 active:scale-[0.98] flex items-center gap-2"
+        style={{ backgroundColor: colors.orange, color: '#ffffff' }}
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -570,7 +614,7 @@ const EmptyState = ({ onAddEntry, hasSearch }) => {
 };
 
 // Entry Card Component
-const EntryCard = ({ entry, onClick }) => {
+const EntryCard = ({ entry, onClick, colors }) => {
   const verseRefs = entry.verses?.map(formatVerseRef).filter(Boolean).join(', ');
   
   return (
@@ -579,83 +623,62 @@ const EntryCard = ({ entry, onClick }) => {
         haptic();
         onClick();
       }}
-      className="w-full text-left p-5 rounded-2xl shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]"
-      style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
+      className="w-full text-left p-4 rounded-xl transition-all duration-200 hover:shadow-md active:scale-[0.99]"
+      style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
     >
       {/* Quote preview */}
       <p 
-        className="text-base mb-3 line-clamp-3"
-        style={{ color: COLORS.textDark, fontFamily: 'Georgia, serif' }}
+        className="text-base mb-3 line-clamp-3 leading-relaxed"
+        style={{ color: colors.text }}
       >
         "{entry.quote}"
       </p>
       
       {/* Author and source */}
-      <p 
-        className="text-sm mb-3 font-medium"
-        style={{ color: COLORS.rustyRed }}
-      >
+      <p className="text-sm mb-3" style={{ color: colors.textMuted }}>
         — {entry.author}
-        {entry.source && <span style={{ color: COLORS.textMuted, fontWeight: 'normal' }}>, {entry.source}</span>}
+        {entry.source && <span>, {entry.source}</span>}
       </p>
       
-      {/* Verse references */}
-      {verseRefs && (
-        <div className="flex flex-wrap gap-2 mb-2">
+      {/* Tags row */}
+      <div className="flex flex-wrap gap-2">
+        {/* Verse references */}
+        {verseRefs && (
           <span 
-            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold"
-            style={{ backgroundColor: COLORS.softBlue, color: COLORS.cream }}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+            style={{ backgroundColor: colors.blueLight, color: colors.blue }}
           >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-            </svg>
             {verseRefs}
           </span>
-        </div>
-      )}
-      
-      {/* Tags */}
-      {entry.tags?.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {entry.tags.map((tag, i) => (
-            <span 
-              key={i}
-              className="px-3 py-1 rounded-full text-xs font-medium"
-              style={{ backgroundColor: COLORS.rustyRedLight, color: COLORS.rustyRed }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
+        )}
+        
+        {/* Tags */}
+        {entry.tags?.map((tag, i) => (
+          <span 
+            key={i}
+            className="px-2.5 py-1 rounded-full text-xs font-medium"
+            style={{ backgroundColor: colors.amberLight, color: colors.amber }}
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
     </button>
   );
 };
 
 // Entry List Component
-const EntryList = ({ entries, onSelectEntry, searchQuery, onAddEntry }) => {
-  // Filter entries based on search query
+const EntryList = ({ entries, onSelectEntry, searchQuery, onAddEntry, colors }) => {
   const filteredEntries = entries.filter(entry => {
     if (!searchQuery.trim()) return true;
     
     const query = searchQuery.toLowerCase();
     
-    // Search in quote
     if (entry.quote?.toLowerCase().includes(query)) return true;
-    
-    // Search in author
     if (entry.author?.toLowerCase().includes(query)) return true;
-    
-    // Search in source
     if (entry.source?.toLowerCase().includes(query)) return true;
-    
-    // Search in notes
     if (entry.notes?.toLowerCase().includes(query)) return true;
-    
-    // Search in tags
     if (entry.tags?.some(tag => tag.toLowerCase().includes(query))) return true;
-    
-    // Search in verse references
     if (entry.verses?.some(v => {
       const ref = formatVerseRef(v).toLowerCase();
       return ref.includes(query);
@@ -665,21 +688,22 @@ const EntryList = ({ entries, onSelectEntry, searchQuery, onAddEntry }) => {
   });
 
   if (entries.length === 0) {
-    return <EmptyState onAddEntry={onAddEntry} hasSearch={false} />;
+    return <EmptyState onAddEntry={onAddEntry} hasSearch={false} colors={colors} />;
   }
 
   if (filteredEntries.length === 0) {
-    return <EmptyState onAddEntry={onAddEntry} hasSearch={true} />;
+    return <EmptyState onAddEntry={onAddEntry} hasSearch={true} colors={colors} />;
   }
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-4">
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="max-w-2xl mx-auto space-y-3">
         {filteredEntries.map(entry => (
           <EntryCard 
             key={entry.id} 
             entry={entry} 
             onClick={() => onSelectEntry(entry)}
+            colors={colors}
           />
         ))}
       </div>
@@ -688,7 +712,7 @@ const EntryList = ({ entries, onSelectEntry, searchQuery, onAddEntry }) => {
 };
 
 // Verse Selector Component
-const VerseSelector = ({ verse, onChange, onRemove, canRemove }) => {
+const VerseSelector = ({ verse, onChange, onRemove, canRemove, colors }) => {
   const [chaptersAvailable, setChaptersAvailable] = useState([]);
   const [versesAvailable, setVersesAvailable] = useState([]);
 
@@ -711,20 +735,19 @@ const VerseSelector = ({ verse, onChange, onRemove, canRemove }) => {
   }, [verse.book, verse.chapter]);
 
   const selectStyle = {
-    backgroundColor: COLORS.warmWhite,
-    border: `2px solid ${COLORS.border}`,
-    color: COLORS.textDark,
+    backgroundColor: colors.surface,
+    border: `1px solid ${colors.border}`,
+    color: colors.text,
   };
 
   return (
     <div className="flex items-start gap-2">
       <div className="flex-1 grid grid-cols-3 gap-2">
-        {/* Book dropdown */}
         <select
           value={verse.book || ''}
           onChange={(e) => onChange({ book: e.target.value || null, chapter: null, verse: null })}
-          className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:ring-2"
-          style={{ ...selectStyle, '--tw-ring-color': COLORS.softBlue }}
+          className="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+          style={selectStyle}
         >
           <option value="">Book</option>
           {BIBLE_BOOKS.map(book => (
@@ -732,13 +755,12 @@ const VerseSelector = ({ verse, onChange, onRemove, canRemove }) => {
           ))}
         </select>
 
-        {/* Chapter dropdown */}
         <select
           value={verse.chapter || ''}
           onChange={(e) => onChange({ ...verse, chapter: e.target.value ? parseInt(e.target.value) : null, verse: null })}
           disabled={!verse.book}
-          className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:ring-2 disabled:opacity-50"
-          style={{ ...selectStyle, '--tw-ring-color': COLORS.softBlue }}
+          className="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+          style={selectStyle}
         >
           <option value="">Ch</option>
           {chaptersAvailable.map(ch => (
@@ -746,13 +768,12 @@ const VerseSelector = ({ verse, onChange, onRemove, canRemove }) => {
           ))}
         </select>
 
-        {/* Verse dropdown */}
         <select
           value={verse.verse || ''}
           onChange={(e) => onChange({ ...verse, verse: e.target.value ? parseInt(e.target.value) : null })}
           disabled={!verse.chapter}
-          className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:ring-2 disabled:opacity-50"
-          style={{ ...selectStyle, '--tw-ring-color': COLORS.softBlue }}
+          className="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+          style={selectStyle}
         >
           <option value="">Vs</option>
           {versesAvailable.map(v => (
@@ -761,15 +782,14 @@ const VerseSelector = ({ verse, onChange, onRemove, canRemove }) => {
         </select>
       </div>
 
-      {/* Remove button */}
       {canRemove && (
         <button
           type="button"
           onClick={onRemove}
-          className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
-          aria-label="Remove verse"
+          className="p-2 rounded-lg transition-colors"
+          style={{ color: colors.textMuted }}
         >
-          <svg className="w-5 h-5" fill="none" stroke={COLORS.textMuted} strokeWidth="2" viewBox="0 0 24 24">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
           </svg>
         </button>
@@ -779,7 +799,7 @@ const VerseSelector = ({ verse, onChange, onRemove, canRemove }) => {
 };
 
 // Tag Input Component
-const TagInput = ({ tags, setTags }) => {
+const TagInput = ({ tags, setTags, colors }) => {
   const [inputValue, setInputValue] = useState('');
 
   const addTag = () => {
@@ -810,19 +830,18 @@ const TagInput = ({ tags, setTags }) => {
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a tag and press Enter"
-          className="flex-1 px-4 py-2 rounded-xl text-base outline-none focus:ring-2"
+          className="flex-1 px-4 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
           style={{ 
-            backgroundColor: COLORS.warmWhite, 
-            border: `2px solid ${COLORS.border}`,
-            color: COLORS.textDark,
-            '--tw-ring-color': COLORS.softBlue
+            backgroundColor: colors.surface, 
+            border: `1px solid ${colors.border}`,
+            color: colors.text,
           }}
         />
         <button
           type="button"
           onClick={addTag}
-          className="px-4 py-2 rounded-xl font-medium transition-colors"
-          style={{ backgroundColor: COLORS.softBlueLight, color: COLORS.softBlueDark }}
+          className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          style={{ backgroundColor: colors.blueLight, color: colors.blue }}
         >
           Add
         </button>
@@ -833,14 +852,14 @@ const TagInput = ({ tags, setTags }) => {
           {tags.map((tag, i) => (
             <span 
               key={i}
-              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium"
-              style={{ backgroundColor: COLORS.rustyRed, color: COLORS.cream }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
+              style={{ backgroundColor: colors.amber, color: '#ffffff' }}
             >
               {tag}
               <button
                 type="button"
                 onClick={() => removeTag(tag)}
-                className="ml-1 hover:opacity-70"
+                className="hover:opacity-70"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -855,7 +874,7 @@ const TagInput = ({ tags, setTags }) => {
 };
 
 // Entry Form Modal
-const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
+const EntryForm = ({ entry, onSave, onClose, onDelete, colors }) => {
   const [quote, setQuote] = useState(entry?.quote || '');
   const [author, setAuthor] = useState(entry?.author || '');
   const [source, setSource] = useState(entry?.source || '');
@@ -894,7 +913,6 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
     setSaving(true);
     haptic('success');
 
-    // Filter out empty verse references
     const cleanVerses = verses.filter(v => v.book);
 
     await onSave({
@@ -916,60 +934,53 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
   };
 
   const inputStyle = {
-    backgroundColor: COLORS.warmWhite,
-    border: `2px solid ${COLORS.border}`,
-    color: COLORS.textDark,
+    backgroundColor: colors.surface,
+    border: `1px solid ${colors.border}`,
+    color: colors.text,
   };
 
   return (
     <div 
       className="fixed inset-0 z-50 flex flex-col"
-      style={{ backgroundColor: COLORS.cream }}
+      style={{ backgroundColor: colors.background, fontFamily: 'Inter, system-ui, sans-serif' }}
     >
-      {/* Modal header */}
+      {/* Header */}
       <div 
-        className="flex items-center justify-between px-4 py-3 shadow-md"
-        style={{ backgroundColor: COLORS.softBlue }}
+        className="flex items-center justify-between px-4 py-3 border-b"
+        style={{ backgroundColor: colors.headerBg, borderColor: colors.headerBorder }}
       >
         <button
           onClick={() => {
             haptic();
             onClose();
           }}
-          className="p-2 -ml-2 rounded-xl"
-          style={{ color: COLORS.cream }}
+          className="p-2 -ml-2 rounded-lg"
+          style={{ color: colors.text }}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
           </svg>
         </button>
         
-        <h2 
-          className="text-lg font-bold"
-          style={{ color: COLORS.cream, fontFamily: 'Georgia, serif' }}
-        >
-          {isEditing ? 'Edit Quote' : 'Add Quote'}
+        <h2 className="text-lg font-semibold" style={{ color: colors.text }}>
+          {isEditing ? 'Edit quote' : 'Add quote'}
         </h2>
         
         <button
           onClick={handleSubmit}
           disabled={saving || !quote.trim() || !author.trim()}
-          className="px-4 py-2 rounded-xl font-semibold transition-opacity disabled:opacity-50"
-          style={{ backgroundColor: COLORS.rustyRed, color: COLORS.cream }}
+          className="px-4 py-2 rounded-lg font-medium text-sm transition-opacity disabled:opacity-50"
+          style={{ backgroundColor: colors.blue, color: '#ffffff' }}
         >
           {saving ? 'Saving...' : 'Save'}
         </button>
       </div>
 
-      {/* Form content */}
+      {/* Form */}
       <div className="flex-1 overflow-y-auto">
         <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-4 space-y-5">
-          {/* Quote */}
           <div>
-            <label 
-              className="block text-sm font-semibold mb-2"
-              style={{ color: COLORS.textDark }}
-            >
+            <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
               Quote *
             </label>
             <textarea
@@ -978,17 +989,13 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
               placeholder="Enter the quote..."
               rows={4}
               required
-              className="w-full px-4 py-3 rounded-2xl text-base outline-none focus:ring-2 resize-none"
-              style={{ ...inputStyle, fontFamily: 'Georgia, serif', '--tw-ring-color': COLORS.softBlue }}
+              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              style={inputStyle}
             />
           </div>
 
-          {/* Author */}
           <div>
-            <label 
-              className="block text-sm font-semibold mb-2"
-              style={{ color: COLORS.textDark }}
-            >
+            <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
               Author *
             </label>
             <input
@@ -997,17 +1004,13 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
               onChange={(e) => setAuthor(e.target.value)}
               placeholder="Who said this?"
               required
-              className="w-full px-4 py-3 rounded-2xl text-base outline-none focus:ring-2"
-              style={{ ...inputStyle, '--tw-ring-color': COLORS.softBlue }}
+              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2 focus:ring-blue-500"
+              style={inputStyle}
             />
           </div>
 
-          {/* Source */}
           <div>
-            <label 
-              className="block text-sm font-semibold mb-2"
-              style={{ color: COLORS.textDark }}
-            >
+            <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
               Source
             </label>
             <input
@@ -1015,17 +1018,13 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
               value={source}
               onChange={(e) => setSource(e.target.value)}
               placeholder="Book or commentary title"
-              className="w-full px-4 py-3 rounded-2xl text-base outline-none focus:ring-2"
-              style={{ ...inputStyle, '--tw-ring-color': COLORS.softBlue }}
+              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2 focus:ring-blue-500"
+              style={inputStyle}
             />
           </div>
 
-          {/* Page */}
           <div>
-            <label 
-              className="block text-sm font-semibold mb-2"
-              style={{ color: COLORS.textDark }}
-            >
+            <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
               Page
             </label>
             <input
@@ -1033,18 +1032,14 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
               value={page}
               onChange={(e) => setPage(e.target.value)}
               placeholder="Page number (optional)"
-              className="w-full px-4 py-3 rounded-2xl text-base outline-none focus:ring-2"
-              style={{ ...inputStyle, '--tw-ring-color': COLORS.softBlue }}
+              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2 focus:ring-blue-500"
+              style={inputStyle}
             />
           </div>
 
-          {/* Bible verses */}
           <div>
-            <label 
-              className="block text-sm font-semibold mb-2"
-              style={{ color: COLORS.textDark }}
-            >
-              Bible Verses
+            <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
+              Bible verses
             </label>
             <div className="space-y-3">
               {verses.map((verse, index) => (
@@ -1054,14 +1049,15 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
                   onChange={(newVerse) => updateVerse(index, newVerse)}
                   onRemove={() => removeVerse(index)}
                   canRemove={verses.length > 1}
+                  colors={colors}
                 />
               ))}
             </div>
             <button
               type="button"
               onClick={addVerse}
-              className="mt-3 text-sm font-semibold flex items-center gap-1 transition-opacity hover:opacity-80"
-              style={{ color: COLORS.softBlue }}
+              className="mt-3 text-sm font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
+              style={{ color: colors.blue }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -1070,23 +1066,15 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
             </button>
           </div>
 
-          {/* Tags */}
           <div>
-            <label 
-              className="block text-sm font-semibold mb-2"
-              style={{ color: COLORS.textDark }}
-            >
+            <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
               Tags
             </label>
-            <TagInput tags={tags} setTags={setTags} />
+            <TagInput tags={tags} setTags={setTags} colors={colors} />
           </div>
 
-          {/* Notes */}
           <div>
-            <label 
-              className="block text-sm font-semibold mb-2"
-              style={{ color: COLORS.textDark }}
-            >
+            <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>
               Notes
             </label>
             <textarea
@@ -1094,36 +1082,35 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Your own thoughts on this quote..."
               rows={3}
-              className="w-full px-4 py-3 rounded-2xl text-base outline-none focus:ring-2 resize-none"
-              style={{ ...inputStyle, '--tw-ring-color': COLORS.softBlue }}
+              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              style={inputStyle}
             />
           </div>
 
-          {/* Delete button for existing entries */}
           {isEditing && (
-            <div className="pt-4 border-t" style={{ borderColor: COLORS.border }}>
+            <div className="pt-4 border-t" style={{ borderColor: colors.border }}>
               {showDeleteConfirm ? (
                 <div 
-                  className="p-4 rounded-2xl space-y-3"
-                  style={{ backgroundColor: COLORS.rustyRedLight }}
+                  className="p-4 rounded-xl space-y-3"
+                  style={{ backgroundColor: '#fef2f2' }}
                 >
-                  <p className="text-sm text-center font-medium" style={{ color: COLORS.rustyRedDark }}>
-                    Are you sure you want to delete this quote? This can't be undone!
+                  <p className="text-sm text-center font-medium" style={{ color: '#991b1b' }}>
+                    Are you sure you want to delete this quote?
                   </p>
                   <div className="flex gap-3">
                     <button
                       type="button"
                       onClick={() => setShowDeleteConfirm(false)}
-                      className="flex-1 py-3 rounded-xl font-semibold"
-                      style={{ backgroundColor: COLORS.warmWhite, color: COLORS.textDark, border: `2px solid ${COLORS.border}` }}
+                      className="flex-1 py-3 rounded-xl font-medium text-sm"
+                      style={{ backgroundColor: colors.surface, color: colors.text, border: `1px solid ${colors.border}` }}
                     >
-                      Keep it
+                      Cancel
                     </button>
                     <button
                       type="button"
                       onClick={handleDelete}
-                      className="flex-1 py-3 rounded-xl font-semibold text-white"
-                      style={{ backgroundColor: COLORS.rustyRed }}
+                      className="flex-1 py-3 rounded-xl font-medium text-sm text-white"
+                      style={{ backgroundColor: '#ef4444' }}
                     >
                       Delete
                     </button>
@@ -1133,10 +1120,10 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="w-full py-3 rounded-xl font-semibold transition-colors hover:opacity-90"
-                  style={{ backgroundColor: COLORS.rustyRedLight, color: COLORS.rustyRed }}
+                  className="w-full py-3 rounded-xl font-medium text-sm transition-colors"
+                  style={{ backgroundColor: '#fef2f2', color: '#ef4444' }}
                 >
-                  Delete Quote
+                  Delete quote
                 </button>
               )}
             </div>
@@ -1148,36 +1135,33 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
 };
 
 // Entry Detail Modal
-const EntryDetail = ({ entry, onClose, onEdit }) => {
+const EntryDetail = ({ entry, onClose, onEdit, colors }) => {
   const verseRefs = entry.verses?.map(formatVerseRef).filter(Boolean);
 
   return (
     <div 
       className="fixed inset-0 z-50 flex flex-col"
-      style={{ backgroundColor: COLORS.cream }}
+      style={{ backgroundColor: colors.background, fontFamily: 'Inter, system-ui, sans-serif' }}
     >
-      {/* Modal header */}
+      {/* Header */}
       <div 
-        className="flex items-center justify-between px-4 py-3 shadow-md"
-        style={{ backgroundColor: COLORS.softBlue }}
+        className="flex items-center justify-between px-4 py-3 border-b"
+        style={{ backgroundColor: colors.headerBg, borderColor: colors.headerBorder }}
       >
         <button
           onClick={() => {
             haptic();
             onClose();
           }}
-          className="p-2 -ml-2 rounded-xl"
-          style={{ color: COLORS.cream }}
+          className="p-2 -ml-2 rounded-lg"
+          style={{ color: colors.text }}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
           </svg>
         </button>
         
-        <h2 
-          className="text-lg font-bold"
-          style={{ color: COLORS.cream, fontFamily: 'Georgia, serif' }}
-        >
+        <h2 className="text-lg font-semibold" style={{ color: colors.text }}>
           Quote
         </h2>
         
@@ -1186,8 +1170,8 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
             haptic();
             onEdit();
           }}
-          className="px-4 py-2 rounded-xl font-semibold"
-          style={{ backgroundColor: COLORS.rustyRed, color: COLORS.cream }}
+          className="px-4 py-2 rounded-lg font-medium text-sm"
+          style={{ backgroundColor: colors.blue, color: '#ffffff' }}
         >
           Edit
         </button>
@@ -1198,61 +1182,53 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
         <div className="max-w-2xl mx-auto">
           {/* Quote card */}
           <div 
-            className="p-6 rounded-2xl shadow-lg mb-6"
-            style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
+            className="p-6 rounded-xl mb-6"
+            style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
           >
             <p 
-              className="text-xl leading-relaxed mb-4"
-              style={{ color: COLORS.textDark, fontFamily: 'Georgia, serif' }}
+              className="text-lg leading-relaxed mb-4"
+              style={{ color: colors.text }}
             >
               "{entry.quote}"
             </p>
             
-            <p 
-              className="text-base font-medium"
-              style={{ color: COLORS.rustyRed }}
-            >
+            <p className="text-base" style={{ color: colors.textMuted }}>
               — {entry.author}
             </p>
           </div>
 
           {/* Details */}
           <div className="space-y-4">
-            {/* Source */}
             {entry.source && (
               <div 
-                className="p-4 rounded-2xl"
-                style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
+                className="p-4 rounded-xl"
+                style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
               >
-                <p className="text-sm font-semibold mb-1" style={{ color: COLORS.textMuted }}>
+                <p className="text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: colors.textLight }}>
                   Source
                 </p>
-                <p style={{ color: COLORS.textDark }}>
+                <p style={{ color: colors.text }}>
                   {entry.source}
-                  {entry.page && <span style={{ color: COLORS.textMuted }}>, p. {entry.page}</span>}
+                  {entry.page && <span style={{ color: colors.textMuted }}>, p. {entry.page}</span>}
                 </p>
               </div>
             )}
 
-            {/* Bible verses */}
             {verseRefs?.length > 0 && (
               <div 
-                className="p-4 rounded-2xl"
-                style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
+                className="p-4 rounded-xl"
+                style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
               >
-                <p className="text-sm font-semibold mb-2" style={{ color: COLORS.textMuted }}>
-                  Bible References
+                <p className="text-xs font-medium mb-2 uppercase tracking-wide" style={{ color: colors.textLight }}>
+                  Bible references
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {verseRefs.map((ref, i) => (
                     <span 
                       key={i}
-                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold"
-                      style={{ backgroundColor: COLORS.softBlue, color: COLORS.cream }}
+                      className="px-3 py-1.5 rounded-full text-sm font-medium"
+                      style={{ backgroundColor: colors.blueLight, color: colors.blue }}
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-                      </svg>
                       {ref}
                     </span>
                   ))}
@@ -1260,21 +1236,20 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
               </div>
             )}
 
-            {/* Tags */}
             {entry.tags?.length > 0 && (
               <div 
-                className="p-4 rounded-2xl"
-                style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
+                className="p-4 rounded-xl"
+                style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
               >
-                <p className="text-sm font-semibold mb-2" style={{ color: COLORS.textMuted }}>
+                <p className="text-xs font-medium mb-2 uppercase tracking-wide" style={{ color: colors.textLight }}>
                   Tags
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {entry.tags.map((tag, i) => (
                     <span 
                       key={i}
-                      className="px-3 py-1 rounded-full text-sm font-medium"
-                      style={{ backgroundColor: COLORS.rustyRed, color: COLORS.cream }}
+                      className="px-3 py-1.5 rounded-full text-sm font-medium"
+                      style={{ backgroundColor: colors.amberLight, color: colors.amber }}
                     >
                       {tag}
                     </span>
@@ -1283,27 +1258,25 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
               </div>
             )}
 
-            {/* Notes */}
             {entry.notes && (
               <div 
-                className="p-4 rounded-2xl"
-                style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
+                className="p-4 rounded-xl"
+                style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
               >
-                <p className="text-sm font-semibold mb-2" style={{ color: COLORS.textMuted }}>
-                  Your Notes
+                <p className="text-xs font-medium mb-2 uppercase tracking-wide" style={{ color: colors.textLight }}>
+                  Your notes
                 </p>
-                <p style={{ color: COLORS.textDark }}>
+                <p style={{ color: colors.text }}>
                   {entry.notes}
                 </p>
               </div>
             )}
 
-            {/* Date added */}
             <div 
-              className="p-4 rounded-2xl"
-              style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
+              className="p-4 rounded-xl"
+              style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
             >
-              <p className="text-sm" style={{ color: COLORS.textMuted }}>
+              <p className="text-sm" style={{ color: colors.textLight }}>
                 Added {new Date(entry.addedAt).toLocaleDateString('en-GB', { 
                   day: 'numeric', 
                   month: 'long', 
@@ -1323,6 +1296,7 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
 // ============================================
 
 export default function App() {
+  const { themeMode, setThemeMode, colors } = useTheme();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
@@ -1331,8 +1305,8 @@ export default function App() {
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
 
-  // Auth state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
@@ -1341,7 +1315,6 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Fetch entries when user logs in
   const fetchEntries = useCallback(async () => {
     if (!user) return;
 
@@ -1366,7 +1339,6 @@ export default function App() {
     fetchEntries();
   }, [fetchEntries]);
 
-  // Sign in handler
   const handleSignIn = async () => {
     setAuthLoading(true);
     try {
@@ -1377,7 +1349,6 @@ export default function App() {
     setAuthLoading(false);
   };
 
-  // Sign out handler
   const handleSignOut = async () => {
     try {
       await signOut(auth);
@@ -1387,16 +1358,13 @@ export default function App() {
     }
   };
 
-  // Save entry handler
   const handleSaveEntry = async (entryData) => {
     if (!user) return;
 
     try {
       if (editingEntry?.id) {
-        // Update existing entry
         await updateDoc(doc(db, 'reg-entries', editingEntry.id), entryData);
       } else {
-        // Create new entry
         await addDoc(collection(db, 'reg-entries'), {
           ...entryData,
           addedAt: new Date().toISOString(),
@@ -1413,7 +1381,6 @@ export default function App() {
     }
   };
 
-  // Delete entry handler
   const handleDeleteEntry = async () => {
     if (!editingEntry?.id) return;
 
@@ -1428,55 +1395,53 @@ export default function App() {
     }
   };
 
-  // Open add form
   const openAddForm = () => {
     setEditingEntry(null);
     setShowForm(true);
   };
 
-  // Open edit form
   const openEditForm = () => {
     setEditingEntry(selectedEntry);
     setShowForm(true);
   };
 
-  // Loading screen
   if (loading) {
     return (
       <div 
         className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: COLORS.cream }}
+        style={{ backgroundColor: colors.background, fontFamily: 'Inter, system-ui, sans-serif' }}
       >
         <div className="text-center">
-          <RegCharacter size={80} className="mx-auto animate-pulse" />
-          <p className="mt-4 text-sm" style={{ color: COLORS.textMuted }}>
-            Just a moment...
+          <span className="text-4xl animate-pulse">📖</span>
+          <p className="mt-4 text-sm" style={{ color: colors.textMuted }}>
+            Loading...
           </p>
         </div>
       </div>
     );
   }
 
-  // Sign in screen
   if (!user) {
-    return <SignInScreen onSignIn={handleSignIn} loading={authLoading} />;
+    return <SignInScreen onSignIn={handleSignIn} loading={authLoading} colors={colors} />;
   }
 
-  // Main app
   return (
     <div 
       className="min-h-screen flex flex-col"
-      style={{ backgroundColor: COLORS.cream }}
+      style={{ backgroundColor: colors.background, fontFamily: 'Inter, system-ui, sans-serif' }}
     >
       <Header 
         user={user} 
         onSignOut={handleSignOut} 
         onAddEntry={openAddForm}
+        onOpenSettings={() => setShowSettings(true)}
+        colors={colors}
       />
       
       <SearchBar 
         searchQuery={searchQuery} 
-        setSearchQuery={setSearchQuery} 
+        setSearchQuery={setSearchQuery}
+        colors={colors}
       />
       
       <EntryList 
@@ -1484,18 +1449,18 @@ export default function App() {
         searchQuery={searchQuery}
         onSelectEntry={setSelectedEntry}
         onAddEntry={openAddForm}
+        colors={colors}
       />
 
-      {/* Entry detail modal */}
       {selectedEntry && !showForm && (
         <EntryDetail
           entry={selectedEntry}
           onClose={() => setSelectedEntry(null)}
           onEdit={openEditForm}
+          colors={colors}
         />
       )}
 
-      {/* Entry form modal */}
       {showForm && (
         <EntryForm
           entry={editingEntry}
@@ -1505,6 +1470,17 @@ export default function App() {
             setEditingEntry(null);
           }}
           onDelete={handleDeleteEntry}
+          colors={colors}
+        />
+      )}
+
+      {showSettings && (
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+          colors={colors}
         />
       )}
     </div>
