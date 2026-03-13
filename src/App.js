@@ -19,6 +19,21 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
+// Brand colours
+const COLORS = {
+  rustyRed: '#c45d3a',
+  rustyRedLight: '#f5e6e0',
+  rustyRedDark: '#a34428',
+  softBlue: '#5b8fa6',
+  softBlueLight: '#e8f1f5',
+  softBlueDark: '#3d6b80',
+  cream: '#fdf9f3',
+  warmWhite: '#ffffff',
+  textDark: '#2d2926',
+  textMuted: '#6b5f58',
+  border: '#e8ddd4',
+};
+
 // Complete Bible data with exact verse counts for all 66 books
 const BIBLE_DATA = {
   "Genesis": [31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,27,33,38,18,34,24,20,67,34,35,46,22,35,43,55,32,20,31,29,43,36,30,23,23,57,38,34,34,28,34,31,22,33,26],
@@ -111,6 +126,156 @@ const formatVerseRef = (verse) => {
   return ref;
 };
 
+// Reg's encouraging messages
+const REG_MESSAGES = {
+  emptyState: [
+    "Ah, a fresh start! Every great library begins with a single quote. What wisdom shall we preserve first?",
+    "Welcome to your personal treasury of wisdom! I've got my reading glasses on and I'm ready when you are.",
+    "Pull up a chair, friend! Let's start collecting those gems you've discovered in your reading.",
+  ],
+  noResults: [
+    "Hmm, I've checked every shelf but couldn't find that one. Perhaps try different words?",
+    "My spectacles must be foggy — I can't seem to find a match. Shall we try another search?",
+    "That's a tricky one! I've looked high and low but no luck yet.",
+  ],
+  greeting: [
+    "Lovely to see you!",
+    "Welcome back, friend!",
+    "Ah, there you are!",
+    "Good to see you again!",
+  ],
+};
+
+const getRandomMessage = (type) => {
+  const messages = REG_MESSAGES[type];
+  return messages[Math.floor(Math.random() * messages.length)];
+};
+
+// ============================================
+// REG CHARACTER SVG COMPONENT
+// ============================================
+
+const RegCharacter = ({ size = 120, className = "" }) => {
+  return (
+    <svg 
+      width={size} 
+      height={size} 
+      viewBox="0 0 120 120" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      {/* Background circle */}
+      <circle cx="60" cy="60" r="58" fill={COLORS.softBlueLight} stroke={COLORS.softBlue} strokeWidth="2"/>
+      
+      {/* Cardigan/body */}
+      <path d="M30 95 Q30 75 45 70 L60 68 L75 70 Q90 75 90 95 L90 120 L30 120 Z" fill={COLORS.softBlue}/>
+      
+      {/* Cardigan opening/shirt */}
+      <path d="M50 70 L50 95 L60 98 L70 95 L70 70 Z" fill={COLORS.cream}/>
+      
+      {/* Bow tie */}
+      <path d="M52 72 L56 75 L52 78 Z" fill={COLORS.rustyRed}/>
+      <path d="M68 72 L64 75 L68 78 Z" fill={COLORS.rustyRed}/>
+      <circle cx="60" cy="75" r="3" fill={COLORS.rustyRedDark}/>
+      
+      {/* Head */}
+      <ellipse cx="60" cy="45" rx="28" ry="30" fill="#f5dcc8"/>
+      
+      {/* Rosy cheeks */}
+      <ellipse cx="38" cy="50" rx="6" ry="4" fill="#e8b0a0" opacity="0.6"/>
+      <ellipse cx="82" cy="50" rx="6" ry="4" fill="#e8b0a0" opacity="0.6"/>
+      
+      {/* Ears */}
+      <ellipse cx="32" cy="45" rx="5" ry="7" fill="#f5dcc8"/>
+      <ellipse cx="88" cy="45" rx="5" ry="7" fill="#f5dcc8"/>
+      
+      {/* Balding head with white hair on sides */}
+      <ellipse cx="60" cy="25" rx="20" ry="12" fill="#f5dcc8"/>
+      <path d="M30 35 Q25 30 28 22 Q32 18 38 20 Q35 28 32 35 Z" fill="#e8e4e0"/>
+      <path d="M90 35 Q95 30 92 22 Q88 18 82 20 Q85 28 88 35 Z" fill="#e8e4e0"/>
+      
+      {/* Eyebrows */}
+      <path d="M42 35 Q48 32 54 35" stroke="#a09080" strokeWidth="2" strokeLinecap="round" fill="none"/>
+      <path d="M66 35 Q72 32 78 35" stroke="#a09080" strokeWidth="2" strokeLinecap="round" fill="none"/>
+      
+      {/* Glasses */}
+      <circle cx="48" cy="43" r="10" fill="none" stroke={COLORS.rustyRedDark} strokeWidth="2"/>
+      <circle cx="72" cy="43" r="10" fill="none" stroke={COLORS.rustyRedDark} strokeWidth="2"/>
+      <path d="M58 43 L62 43" stroke={COLORS.rustyRedDark} strokeWidth="2"/>
+      <path d="M38 41 L32 38" stroke={COLORS.rustyRedDark} strokeWidth="2"/>
+      <path d="M82 41 L88 38" stroke={COLORS.rustyRedDark} strokeWidth="2"/>
+      
+      {/* Eyes behind glasses */}
+      <circle cx="48" cy="44" r="3" fill={COLORS.textDark}/>
+      <circle cx="72" cy="44" r="3" fill={COLORS.textDark}/>
+      <circle cx="49" cy="43" r="1" fill="white"/>
+      <circle cx="73" cy="43" r="1" fill="white"/>
+      
+      {/* Friendly smile */}
+      <path d="M50 58 Q60 66 70 58" stroke={COLORS.rustyRedDark} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+      
+      {/* Nose */}
+      <path d="M60 48 Q63 52 60 56 Q57 52 60 48" fill="#e8c4b0"/>
+    </svg>
+  );
+};
+
+// Small Reg for header
+const RegCharacterSmall = ({ size = 40 }) => {
+  return (
+    <svg 
+      width={size} 
+      height={size} 
+      viewBox="0 0 120 120" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Background circle */}
+      <circle cx="60" cy="60" r="58" fill={COLORS.softBlueLight} stroke={COLORS.softBlue} strokeWidth="3"/>
+      
+      {/* Cardigan/body */}
+      <path d="M30 95 Q30 75 45 70 L60 68 L75 70 Q90 75 90 95 L90 120 L30 120 Z" fill={COLORS.softBlue}/>
+      
+      {/* Cardigan opening/shirt */}
+      <path d="M50 70 L50 95 L60 98 L70 95 L70 70 Z" fill={COLORS.cream}/>
+      
+      {/* Bow tie */}
+      <path d="M52 72 L56 75 L52 78 Z" fill={COLORS.rustyRed}/>
+      <path d="M68 72 L64 75 L68 78 Z" fill={COLORS.rustyRed}/>
+      <circle cx="60" cy="75" r="3" fill={COLORS.rustyRedDark}/>
+      
+      {/* Head */}
+      <ellipse cx="60" cy="45" rx="28" ry="30" fill="#f5dcc8"/>
+      
+      {/* Rosy cheeks */}
+      <ellipse cx="38" cy="50" rx="6" ry="4" fill="#e8b0a0" opacity="0.6"/>
+      <ellipse cx="82" cy="50" rx="6" ry="4" fill="#e8b0a0" opacity="0.6"/>
+      
+      {/* Ears */}
+      <ellipse cx="32" cy="45" rx="5" ry="7" fill="#f5dcc8"/>
+      <ellipse cx="88" cy="45" rx="5" ry="7" fill="#f5dcc8"/>
+      
+      {/* Balding head with white hair */}
+      <ellipse cx="60" cy="25" rx="20" ry="12" fill="#f5dcc8"/>
+      <path d="M30 35 Q25 30 28 22 Q32 18 38 20 Q35 28 32 35 Z" fill="#e8e4e0"/>
+      <path d="M90 35 Q95 30 92 22 Q88 18 82 20 Q85 28 88 35 Z" fill="#e8e4e0"/>
+      
+      {/* Glasses */}
+      <circle cx="48" cy="43" r="10" fill="none" stroke={COLORS.rustyRedDark} strokeWidth="3"/>
+      <circle cx="72" cy="43" r="10" fill="none" stroke={COLORS.rustyRedDark} strokeWidth="3"/>
+      <path d="M58 43 L62 43" stroke={COLORS.rustyRedDark} strokeWidth="3"/>
+      
+      {/* Eyes */}
+      <circle cx="48" cy="44" r="4" fill={COLORS.textDark}/>
+      <circle cx="72" cy="44" r="4" fill={COLORS.textDark}/>
+      
+      {/* Smile */}
+      <path d="M50 58 Q60 66 70 58" stroke={COLORS.rustyRedDark} strokeWidth="3" strokeLinecap="round" fill="none"/>
+    </svg>
+  );
+};
+
 // ============================================
 // COMPONENTS
 // ============================================
@@ -118,49 +283,44 @@ const formatVerseRef = (verse) => {
 // Sign In Screen
 const SignInScreen = ({ onSignIn, loading }) => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ backgroundColor: '#faf7f2' }}>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ backgroundColor: COLORS.cream }}>
       <div className="max-w-md w-full text-center">
-        {/* Logo/Title */}
-        <div className="mb-8">
-          <div 
-            className="w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center shadow-lg"
-            style={{ backgroundColor: '#1a3a2a' }}
-          >
-            <span className="text-4xl" style={{ color: '#c9a84c' }}>R</span>
-          </div>
-          <h1 
-            className="text-4xl font-serif mb-2"
-            style={{ color: '#1a3a2a', fontFamily: 'Georgia, serif' }}
-          >
-            Reg
-          </h1>
-          <p 
-            className="text-lg italic"
-            style={{ color: '#1a3a2a', opacity: 0.8 }}
-          >
-            Your personal quote companion
-          </p>
+        {/* Reg Character - Large */}
+        <div className="mb-6 animate-bounce-slow">
+          <RegCharacter size={140} />
         </div>
+        
+        {/* Title */}
+        <h1 
+          className="text-5xl font-bold mb-2"
+          style={{ color: COLORS.rustyRed, fontFamily: 'Georgia, serif' }}
+        >
+          Reg
+        </h1>
+        <p 
+          className="text-lg mb-8"
+          style={{ color: COLORS.textMuted }}
+        >
+          Your friendly quote companion
+        </p>
 
         {/* Welcome message */}
         <div 
-          className="p-6 rounded-xl mb-8 shadow-md"
-          style={{ backgroundColor: '#fff', border: '1px solid #e8e0d5' }}
+          className="p-6 rounded-2xl mb-8 shadow-lg"
+          style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
         >
           <p 
             className="text-lg mb-4 leading-relaxed"
-            style={{ color: '#1c1917', fontFamily: 'Georgia, serif' }}
+            style={{ color: COLORS.textDark, fontFamily: 'Georgia, serif' }}
           >
-            "Ah, welcome! I'm Reginald — though my friends call me Reg. 
-            I've spent years collecting the finest words from the wisest minds, 
-            and I'd be delighted to help you build your own treasury of quotes."
+            "Ah, welcome! Pull up a chair, friend. I'm Reg — I've spent years helping folks like you 
+            collect the finest words from the wisest minds. Shall we build your library together?"
           </p>
           <p 
             className="text-base"
-            style={{ color: '#1c1917', opacity: 0.7 }}
+            style={{ color: COLORS.textMuted }}
           >
-            Save quotes from books and commentaries, tag them to Bible verses, 
-            and find exactly the right words when you need them most.
+            Save quotes, tag them to Bible verses, and find exactly the right words when you need them most.
           </p>
         </div>
 
@@ -171,10 +331,10 @@ const SignInScreen = ({ onSignIn, loading }) => {
             onSignIn();
           }}
           disabled={loading}
-          className="w-full py-4 px-6 rounded-xl font-medium text-lg shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+          className="w-full py-4 px-6 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
           style={{ 
-            backgroundColor: '#1a3a2a', 
-            color: '#faf7f2',
+            backgroundColor: COLORS.rustyRed, 
+            color: COLORS.cream,
           }}
         >
           {loading ? (
@@ -196,40 +356,83 @@ const SignInScreen = ({ onSignIn, loading }) => {
   );
 };
 
+// User Menu Component
+const UserMenu = ({ user, onSignOut, isOpen, onClose }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 z-40"
+        onClick={onClose}
+      />
+      
+      {/* Menu */}
+      <div 
+        className="absolute right-4 top-14 z-50 py-2 rounded-xl shadow-xl min-w-48"
+        style={{ backgroundColor: COLORS.warmWhite, border: `1px solid ${COLORS.border}` }}
+      >
+        <div className="px-4 py-3 border-b" style={{ borderColor: COLORS.border }}>
+          <p className="font-medium" style={{ color: COLORS.textDark }}>{user?.displayName}</p>
+          <p className="text-sm" style={{ color: COLORS.textMuted }}>{user?.email}</p>
+        </div>
+        
+        <button
+          onClick={() => {
+            haptic();
+            onSignOut();
+            onClose();
+          }}
+          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors"
+          style={{ color: COLORS.rustyRed }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+          </svg>
+          Sign out
+        </button>
+      </div>
+    </>
+  );
+};
+
 // Header Component
 const Header = ({ user, onSignOut, onAddEntry }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  
   return (
     <header 
       className="sticky top-0 z-40 px-4 py-3 shadow-md"
-      style={{ backgroundColor: '#1a3a2a' }}
+      style={{ backgroundColor: COLORS.softBlue }}
     >
       <div className="max-w-2xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div 
-            className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: '#c9a84c' }}
-          >
-            <span className="text-lg font-bold" style={{ color: '#1a3a2a' }}>R</span>
+          <RegCharacterSmall size={44} />
+          <div>
+            <h1 
+              className="text-xl font-bold"
+              style={{ color: COLORS.cream, fontFamily: 'Georgia, serif' }}
+            >
+              Reg
+            </h1>
+            <p className="text-xs" style={{ color: COLORS.softBlueLight, opacity: 0.9 }}>
+              {getRandomMessage('greeting')}
+            </p>
           </div>
-          <h1 
-            className="text-xl font-serif"
-            style={{ color: '#faf7f2', fontFamily: 'Georgia, serif' }}
-          >
-            Reg
-          </h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative">
           <button
             onClick={() => {
               haptic('success');
               onAddEntry();
             }}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
-            style={{ backgroundColor: '#c9a84c' }}
+            className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-md"
+            style={{ backgroundColor: COLORS.rustyRed }}
             aria-label="Add new entry"
           >
-            <svg className="w-6 h-6" fill="none" stroke="#1a3a2a" strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke={COLORS.cream} strokeWidth="2.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
           </button>
@@ -237,17 +440,25 @@ const Header = ({ user, onSignOut, onAddEntry }) => {
           <button
             onClick={() => {
               haptic();
-              onSignOut();
+              setMenuOpen(!menuOpen);
             }}
-            className="p-2 rounded-full transition-opacity hover:opacity-80"
-            aria-label="Sign out"
+            className="p-1 rounded-full transition-all duration-200 hover:ring-2 hover:ring-white/30"
+            aria-label="User menu"
           >
             <img 
-              src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'U')}&background=c9a84c&color=1a3a2a`} 
+              src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'U')}&background=c45d3a&color=fdf9f3`} 
               alt={user?.displayName || 'User'}
-              className="w-8 h-8 rounded-full"
+              className="w-9 h-9 rounded-full border-2"
+              style={{ borderColor: COLORS.cream }}
             />
           </button>
+          
+          <UserMenu 
+            user={user}
+            onSignOut={onSignOut}
+            isOpen={menuOpen}
+            onClose={() => setMenuOpen(false)}
+          />
         </div>
       </div>
     </header>
@@ -257,13 +468,13 @@ const Header = ({ user, onSignOut, onAddEntry }) => {
 // Search Bar Component
 const SearchBar = ({ searchQuery, setSearchQuery }) => {
   return (
-    <div className="px-4 py-3" style={{ backgroundColor: '#faf7f2' }}>
+    <div className="px-4 py-3" style={{ backgroundColor: COLORS.cream }}>
       <div className="max-w-2xl mx-auto">
         <div 
-          className="flex items-center gap-3 px-4 py-3 rounded-xl"
-          style={{ backgroundColor: '#fff', border: '1px solid #e8e0d5' }}
+          className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-sm"
+          style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
         >
-          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="#1a3a2a" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.5 }}>
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke={COLORS.softBlue} strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
           <input
@@ -272,14 +483,14 @@ const SearchBar = ({ searchQuery, setSearchQuery }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-transparent outline-none text-base"
-            style={{ color: '#1c1917' }}
+            style={{ color: COLORS.textDark }}
           />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery('')}
-              className="p-1 rounded-full hover:bg-gray-100"
+              className="p-1 rounded-full hover:bg-gray-100 transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" stroke="#1c1917" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.5 }}>
+              <svg className="w-5 h-5" fill="none" stroke={COLORS.textMuted} strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
               </svg>
             </button>
@@ -295,22 +506,18 @@ const EmptyState = ({ onAddEntry, hasSearch }) => {
   if (hasSearch) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <div 
-          className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-          style={{ backgroundColor: '#e8e0d5' }}
-        >
-          <svg className="w-10 h-10" fill="none" stroke="#1a3a2a" strokeWidth="1.5" viewBox="0 0 24 24" style={{ opacity: 0.5 }}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-          </svg>
-        </div>
+        <RegCharacter size={100} className="mb-4 opacity-80" />
         <h3 
-          className="text-xl font-serif mb-2"
-          style={{ color: '#1a3a2a', fontFamily: 'Georgia, serif' }}
+          className="text-xl font-semibold mb-2"
+          style={{ color: COLORS.textDark, fontFamily: 'Georgia, serif' }}
         >
-          No matches found
+          Hmm, can't find that one...
         </h3>
-        <p style={{ color: '#1c1917', opacity: 0.7 }}>
-          Try adjusting your search terms
+        <p 
+          className="text-base max-w-xs"
+          style={{ color: COLORS.textMuted, fontFamily: 'Georgia, serif', fontStyle: 'italic' }}
+        >
+          "{getRandomMessage('noResults')}"
         </p>
       </div>
     );
@@ -318,34 +525,28 @@ const EmptyState = ({ onAddEntry, hasSearch }) => {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-      <div 
-        className="w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-lg"
-        style={{ backgroundColor: '#1a3a2a' }}
-      >
-        <span className="text-4xl" style={{ color: '#c9a84c' }}>R</span>
-      </div>
+      <RegCharacter size={120} className="mb-6" />
       
       <h3 
-        className="text-2xl font-serif mb-4"
-        style={{ color: '#1a3a2a', fontFamily: 'Georgia, serif' }}
+        className="text-2xl font-bold mb-4"
+        style={{ color: COLORS.textDark, fontFamily: 'Georgia, serif' }}
       >
-        Your library awaits
+        Your library awaits!
       </h3>
       
       <div 
-        className="max-w-sm p-5 rounded-xl mb-6"
-        style={{ backgroundColor: '#fff', border: '1px solid #e8e0d5' }}
+        className="max-w-sm p-5 rounded-2xl mb-6 shadow-md"
+        style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
       >
         <p 
-          className="text-base italic leading-relaxed"
-          style={{ color: '#1c1917', fontFamily: 'Georgia, serif' }}
+          className="text-base leading-relaxed"
+          style={{ color: COLORS.textDark, fontFamily: 'Georgia, serif', fontStyle: 'italic' }}
         >
-          "Every great sermon begins with words that moved you first. 
-          Let's start collecting the quotes that will one day move others."
+          "{getRandomMessage('emptyState')}"
         </p>
         <p 
-          className="text-sm mt-3"
-          style={{ color: '#1a3a2a', opacity: 0.7 }}
+          className="text-sm mt-3 font-medium"
+          style={{ color: COLORS.rustyRed }}
         >
           — Reg
         </p>
@@ -356,8 +557,8 @@ const EmptyState = ({ onAddEntry, hasSearch }) => {
           haptic('success');
           onAddEntry();
         }}
-        className="py-3 px-6 rounded-xl font-medium shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2"
-        style={{ backgroundColor: '#c9a84c', color: '#1a3a2a' }}
+        className="py-3 px-6 rounded-2xl font-semibold shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2"
+        style={{ backgroundColor: COLORS.rustyRed, color: COLORS.cream }}
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -378,32 +579,32 @@ const EntryCard = ({ entry, onClick }) => {
         haptic();
         onClick();
       }}
-      className="w-full text-left p-5 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]"
-      style={{ backgroundColor: '#fff', border: '1px solid #e8e0d5' }}
+      className="w-full text-left p-5 rounded-2xl shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]"
+      style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
     >
       {/* Quote preview */}
       <p 
         className="text-base mb-3 line-clamp-3"
-        style={{ color: '#1c1917', fontFamily: 'Georgia, serif' }}
+        style={{ color: COLORS.textDark, fontFamily: 'Georgia, serif' }}
       >
         "{entry.quote}"
       </p>
       
       {/* Author and source */}
       <p 
-        className="text-sm mb-3"
-        style={{ color: '#1a3a2a' }}
+        className="text-sm mb-3 font-medium"
+        style={{ color: COLORS.rustyRed }}
       >
         — {entry.author}
-        {entry.source && <span style={{ opacity: 0.7 }}>, {entry.source}</span>}
+        {entry.source && <span style={{ color: COLORS.textMuted, fontWeight: 'normal' }}>, {entry.source}</span>}
       </p>
       
       {/* Verse references */}
       {verseRefs && (
         <div className="flex flex-wrap gap-2 mb-2">
           <span 
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
-            style={{ backgroundColor: '#1a3a2a', color: '#faf7f2' }}
+            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold"
+            style={{ backgroundColor: COLORS.softBlue, color: COLORS.cream }}
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
@@ -419,8 +620,8 @@ const EntryCard = ({ entry, onClick }) => {
           {entry.tags.map((tag, i) => (
             <span 
               key={i}
-              className="px-2 py-1 rounded-full text-xs"
-              style={{ backgroundColor: '#c9a84c', color: '#1a3a2a', opacity: 0.9 }}
+              className="px-3 py-1 rounded-full text-xs font-medium"
+              style={{ backgroundColor: COLORS.rustyRedLight, color: COLORS.rustyRed }}
             >
               {tag}
             </span>
@@ -510,9 +711,9 @@ const VerseSelector = ({ verse, onChange, onRemove, canRemove }) => {
   }, [verse.book, verse.chapter]);
 
   const selectStyle = {
-    backgroundColor: '#fff',
-    border: '1px solid #e8e0d5',
-    color: '#1c1917',
+    backgroundColor: COLORS.warmWhite,
+    border: `2px solid ${COLORS.border}`,
+    color: COLORS.textDark,
   };
 
   return (
@@ -522,8 +723,8 @@ const VerseSelector = ({ verse, onChange, onRemove, canRemove }) => {
         <select
           value={verse.book || ''}
           onChange={(e) => onChange({ book: e.target.value || null, chapter: null, verse: null })}
-          className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:ring-2"
-          style={{ ...selectStyle, '--tw-ring-color': '#c9a84c' }}
+          className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:ring-2"
+          style={{ ...selectStyle, '--tw-ring-color': COLORS.softBlue }}
         >
           <option value="">Book</option>
           {BIBLE_BOOKS.map(book => (
@@ -536,8 +737,8 @@ const VerseSelector = ({ verse, onChange, onRemove, canRemove }) => {
           value={verse.chapter || ''}
           onChange={(e) => onChange({ ...verse, chapter: e.target.value ? parseInt(e.target.value) : null, verse: null })}
           disabled={!verse.book}
-          className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:ring-2 disabled:opacity-50"
-          style={{ ...selectStyle, '--tw-ring-color': '#c9a84c' }}
+          className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:ring-2 disabled:opacity-50"
+          style={{ ...selectStyle, '--tw-ring-color': COLORS.softBlue }}
         >
           <option value="">Ch</option>
           {chaptersAvailable.map(ch => (
@@ -550,8 +751,8 @@ const VerseSelector = ({ verse, onChange, onRemove, canRemove }) => {
           value={verse.verse || ''}
           onChange={(e) => onChange({ ...verse, verse: e.target.value ? parseInt(e.target.value) : null })}
           disabled={!verse.chapter}
-          className="w-full px-3 py-2 rounded-lg text-sm outline-none focus:ring-2 disabled:opacity-50"
-          style={{ ...selectStyle, '--tw-ring-color': '#c9a84c' }}
+          className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:ring-2 disabled:opacity-50"
+          style={{ ...selectStyle, '--tw-ring-color': COLORS.softBlue }}
         >
           <option value="">Vs</option>
           {versesAvailable.map(v => (
@@ -565,10 +766,10 @@ const VerseSelector = ({ verse, onChange, onRemove, canRemove }) => {
         <button
           type="button"
           onClick={onRemove}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
           aria-label="Remove verse"
         >
-          <svg className="w-5 h-5" fill="none" stroke="#1c1917" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.5 }}>
+          <svg className="w-5 h-5" fill="none" stroke={COLORS.textMuted} strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
           </svg>
         </button>
@@ -609,19 +810,19 @@ const TagInput = ({ tags, setTags }) => {
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a tag and press Enter"
-          className="flex-1 px-4 py-2 rounded-lg text-base outline-none focus:ring-2"
+          className="flex-1 px-4 py-2 rounded-xl text-base outline-none focus:ring-2"
           style={{ 
-            backgroundColor: '#fff', 
-            border: '1px solid #e8e0d5',
-            color: '#1c1917',
-            '--tw-ring-color': '#c9a84c'
+            backgroundColor: COLORS.warmWhite, 
+            border: `2px solid ${COLORS.border}`,
+            color: COLORS.textDark,
+            '--tw-ring-color': COLORS.softBlue
           }}
         />
         <button
           type="button"
           onClick={addTag}
-          className="px-4 py-2 rounded-lg font-medium transition-colors"
-          style={{ backgroundColor: '#e8e0d5', color: '#1a3a2a' }}
+          className="px-4 py-2 rounded-xl font-medium transition-colors"
+          style={{ backgroundColor: COLORS.softBlueLight, color: COLORS.softBlueDark }}
         >
           Add
         </button>
@@ -632,8 +833,8 @@ const TagInput = ({ tags, setTags }) => {
           {tags.map((tag, i) => (
             <span 
               key={i}
-              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm"
-              style={{ backgroundColor: '#c9a84c', color: '#1a3a2a' }}
+              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium"
+              style={{ backgroundColor: COLORS.rustyRed, color: COLORS.cream }}
             >
               {tag}
               <button
@@ -715,28 +916,28 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
   };
 
   const inputStyle = {
-    backgroundColor: '#fff',
-    border: '1px solid #e8e0d5',
-    color: '#1c1917',
+    backgroundColor: COLORS.warmWhite,
+    border: `2px solid ${COLORS.border}`,
+    color: COLORS.textDark,
   };
 
   return (
     <div 
       className="fixed inset-0 z-50 flex flex-col"
-      style={{ backgroundColor: '#faf7f2' }}
+      style={{ backgroundColor: COLORS.cream }}
     >
       {/* Modal header */}
       <div 
         className="flex items-center justify-between px-4 py-3 shadow-md"
-        style={{ backgroundColor: '#1a3a2a' }}
+        style={{ backgroundColor: COLORS.softBlue }}
       >
         <button
           onClick={() => {
             haptic();
             onClose();
           }}
-          className="p-2 -ml-2 rounded-lg"
-          style={{ color: '#faf7f2' }}
+          className="p-2 -ml-2 rounded-xl"
+          style={{ color: COLORS.cream }}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -744,8 +945,8 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
         </button>
         
         <h2 
-          className="text-lg font-serif"
-          style={{ color: '#faf7f2', fontFamily: 'Georgia, serif' }}
+          className="text-lg font-bold"
+          style={{ color: COLORS.cream, fontFamily: 'Georgia, serif' }}
         >
           {isEditing ? 'Edit Quote' : 'Add Quote'}
         </h2>
@@ -753,8 +954,8 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
         <button
           onClick={handleSubmit}
           disabled={saving || !quote.trim() || !author.trim()}
-          className="px-4 py-2 rounded-lg font-medium transition-opacity disabled:opacity-50"
-          style={{ backgroundColor: '#c9a84c', color: '#1a3a2a' }}
+          className="px-4 py-2 rounded-xl font-semibold transition-opacity disabled:opacity-50"
+          style={{ backgroundColor: COLORS.rustyRed, color: COLORS.cream }}
         >
           {saving ? 'Saving...' : 'Save'}
         </button>
@@ -766,8 +967,8 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
           {/* Quote */}
           <div>
             <label 
-              className="block text-sm font-medium mb-2"
-              style={{ color: '#1a3a2a' }}
+              className="block text-sm font-semibold mb-2"
+              style={{ color: COLORS.textDark }}
             >
               Quote *
             </label>
@@ -777,16 +978,16 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
               placeholder="Enter the quote..."
               rows={4}
               required
-              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2 resize-none"
-              style={{ ...inputStyle, fontFamily: 'Georgia, serif', '--tw-ring-color': '#c9a84c' }}
+              className="w-full px-4 py-3 rounded-2xl text-base outline-none focus:ring-2 resize-none"
+              style={{ ...inputStyle, fontFamily: 'Georgia, serif', '--tw-ring-color': COLORS.softBlue }}
             />
           </div>
 
           {/* Author */}
           <div>
             <label 
-              className="block text-sm font-medium mb-2"
-              style={{ color: '#1a3a2a' }}
+              className="block text-sm font-semibold mb-2"
+              style={{ color: COLORS.textDark }}
             >
               Author *
             </label>
@@ -796,16 +997,16 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
               onChange={(e) => setAuthor(e.target.value)}
               placeholder="Who said this?"
               required
-              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2"
-              style={{ ...inputStyle, '--tw-ring-color': '#c9a84c' }}
+              className="w-full px-4 py-3 rounded-2xl text-base outline-none focus:ring-2"
+              style={{ ...inputStyle, '--tw-ring-color': COLORS.softBlue }}
             />
           </div>
 
           {/* Source */}
           <div>
             <label 
-              className="block text-sm font-medium mb-2"
-              style={{ color: '#1a3a2a' }}
+              className="block text-sm font-semibold mb-2"
+              style={{ color: COLORS.textDark }}
             >
               Source
             </label>
@@ -814,16 +1015,16 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
               value={source}
               onChange={(e) => setSource(e.target.value)}
               placeholder="Book or commentary title"
-              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2"
-              style={{ ...inputStyle, '--tw-ring-color': '#c9a84c' }}
+              className="w-full px-4 py-3 rounded-2xl text-base outline-none focus:ring-2"
+              style={{ ...inputStyle, '--tw-ring-color': COLORS.softBlue }}
             />
           </div>
 
           {/* Page */}
           <div>
             <label 
-              className="block text-sm font-medium mb-2"
-              style={{ color: '#1a3a2a' }}
+              className="block text-sm font-semibold mb-2"
+              style={{ color: COLORS.textDark }}
             >
               Page
             </label>
@@ -832,16 +1033,16 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
               value={page}
               onChange={(e) => setPage(e.target.value)}
               placeholder="Page number (optional)"
-              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2"
-              style={{ ...inputStyle, '--tw-ring-color': '#c9a84c' }}
+              className="w-full px-4 py-3 rounded-2xl text-base outline-none focus:ring-2"
+              style={{ ...inputStyle, '--tw-ring-color': COLORS.softBlue }}
             />
           </div>
 
           {/* Bible verses */}
           <div>
             <label 
-              className="block text-sm font-medium mb-2"
-              style={{ color: '#1a3a2a' }}
+              className="block text-sm font-semibold mb-2"
+              style={{ color: COLORS.textDark }}
             >
               Bible Verses
             </label>
@@ -859,8 +1060,8 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
             <button
               type="button"
               onClick={addVerse}
-              className="mt-3 text-sm font-medium flex items-center gap-1 transition-opacity hover:opacity-80"
-              style={{ color: '#1a3a2a' }}
+              className="mt-3 text-sm font-semibold flex items-center gap-1 transition-opacity hover:opacity-80"
+              style={{ color: COLORS.softBlue }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -872,8 +1073,8 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
           {/* Tags */}
           <div>
             <label 
-              className="block text-sm font-medium mb-2"
-              style={{ color: '#1a3a2a' }}
+              className="block text-sm font-semibold mb-2"
+              style={{ color: COLORS.textDark }}
             >
               Tags
             </label>
@@ -883,8 +1084,8 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
           {/* Notes */}
           <div>
             <label 
-              className="block text-sm font-medium mb-2"
-              style={{ color: '#1a3a2a' }}
+              className="block text-sm font-semibold mb-2"
+              style={{ color: COLORS.textDark }}
             >
               Notes
             </label>
@@ -893,33 +1094,36 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Your own thoughts on this quote..."
               rows={3}
-              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2 resize-none"
-              style={{ ...inputStyle, '--tw-ring-color': '#c9a84c' }}
+              className="w-full px-4 py-3 rounded-2xl text-base outline-none focus:ring-2 resize-none"
+              style={{ ...inputStyle, '--tw-ring-color': COLORS.softBlue }}
             />
           </div>
 
           {/* Delete button for existing entries */}
           {isEditing && (
-            <div className="pt-4 border-t" style={{ borderColor: '#e8e0d5' }}>
+            <div className="pt-4 border-t" style={{ borderColor: COLORS.border }}>
               {showDeleteConfirm ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-center" style={{ color: '#1c1917' }}>
-                    Are you sure you want to delete this quote?
+                <div 
+                  className="p-4 rounded-2xl space-y-3"
+                  style={{ backgroundColor: COLORS.rustyRedLight }}
+                >
+                  <p className="text-sm text-center font-medium" style={{ color: COLORS.rustyRedDark }}>
+                    Are you sure you want to delete this quote? This can't be undone!
                   </p>
                   <div className="flex gap-3">
                     <button
                       type="button"
                       onClick={() => setShowDeleteConfirm(false)}
-                      className="flex-1 py-3 rounded-xl font-medium"
-                      style={{ backgroundColor: '#e8e0d5', color: '#1a3a2a' }}
+                      className="flex-1 py-3 rounded-xl font-semibold"
+                      style={{ backgroundColor: COLORS.warmWhite, color: COLORS.textDark, border: `2px solid ${COLORS.border}` }}
                     >
-                      Cancel
+                      Keep it
                     </button>
                     <button
                       type="button"
                       onClick={handleDelete}
-                      className="flex-1 py-3 rounded-xl font-medium text-white"
-                      style={{ backgroundColor: '#dc2626' }}
+                      className="flex-1 py-3 rounded-xl font-semibold text-white"
+                      style={{ backgroundColor: COLORS.rustyRed }}
                     >
                       Delete
                     </button>
@@ -929,8 +1133,8 @@ const EntryForm = ({ entry, onSave, onClose, onDelete }) => {
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="w-full py-3 rounded-xl font-medium transition-colors hover:opacity-90"
-                  style={{ backgroundColor: '#fee2e2', color: '#dc2626' }}
+                  className="w-full py-3 rounded-xl font-semibold transition-colors hover:opacity-90"
+                  style={{ backgroundColor: COLORS.rustyRedLight, color: COLORS.rustyRed }}
                 >
                   Delete Quote
                 </button>
@@ -950,20 +1154,20 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
   return (
     <div 
       className="fixed inset-0 z-50 flex flex-col"
-      style={{ backgroundColor: '#faf7f2' }}
+      style={{ backgroundColor: COLORS.cream }}
     >
       {/* Modal header */}
       <div 
         className="flex items-center justify-between px-4 py-3 shadow-md"
-        style={{ backgroundColor: '#1a3a2a' }}
+        style={{ backgroundColor: COLORS.softBlue }}
       >
         <button
           onClick={() => {
             haptic();
             onClose();
           }}
-          className="p-2 -ml-2 rounded-lg"
-          style={{ color: '#faf7f2' }}
+          className="p-2 -ml-2 rounded-xl"
+          style={{ color: COLORS.cream }}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
@@ -971,8 +1175,8 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
         </button>
         
         <h2 
-          className="text-lg font-serif"
-          style={{ color: '#faf7f2', fontFamily: 'Georgia, serif' }}
+          className="text-lg font-bold"
+          style={{ color: COLORS.cream, fontFamily: 'Georgia, serif' }}
         >
           Quote
         </h2>
@@ -982,8 +1186,8 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
             haptic();
             onEdit();
           }}
-          className="px-4 py-2 rounded-lg font-medium"
-          style={{ backgroundColor: '#c9a84c', color: '#1a3a2a' }}
+          className="px-4 py-2 rounded-xl font-semibold"
+          style={{ backgroundColor: COLORS.rustyRed, color: COLORS.cream }}
         >
           Edit
         </button>
@@ -994,19 +1198,19 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
         <div className="max-w-2xl mx-auto">
           {/* Quote card */}
           <div 
-            className="p-6 rounded-xl shadow-lg mb-6"
-            style={{ backgroundColor: '#fff', border: '1px solid #e8e0d5' }}
+            className="p-6 rounded-2xl shadow-lg mb-6"
+            style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
           >
             <p 
               className="text-xl leading-relaxed mb-4"
-              style={{ color: '#1c1917', fontFamily: 'Georgia, serif' }}
+              style={{ color: COLORS.textDark, fontFamily: 'Georgia, serif' }}
             >
               "{entry.quote}"
             </p>
             
             <p 
-              className="text-base"
-              style={{ color: '#1a3a2a' }}
+              className="text-base font-medium"
+              style={{ color: COLORS.rustyRed }}
             >
               — {entry.author}
             </p>
@@ -1017,15 +1221,15 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
             {/* Source */}
             {entry.source && (
               <div 
-                className="p-4 rounded-xl"
-                style={{ backgroundColor: '#fff', border: '1px solid #e8e0d5' }}
+                className="p-4 rounded-2xl"
+                style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
               >
-                <p className="text-sm font-medium mb-1" style={{ color: '#1a3a2a', opacity: 0.7 }}>
+                <p className="text-sm font-semibold mb-1" style={{ color: COLORS.textMuted }}>
                   Source
                 </p>
-                <p style={{ color: '#1c1917' }}>
+                <p style={{ color: COLORS.textDark }}>
                   {entry.source}
-                  {entry.page && <span style={{ opacity: 0.7 }}>, p. {entry.page}</span>}
+                  {entry.page && <span style={{ color: COLORS.textMuted }}>, p. {entry.page}</span>}
                 </p>
               </div>
             )}
@@ -1033,18 +1237,18 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
             {/* Bible verses */}
             {verseRefs?.length > 0 && (
               <div 
-                className="p-4 rounded-xl"
-                style={{ backgroundColor: '#fff', border: '1px solid #e8e0d5' }}
+                className="p-4 rounded-2xl"
+                style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
               >
-                <p className="text-sm font-medium mb-2" style={{ color: '#1a3a2a', opacity: 0.7 }}>
+                <p className="text-sm font-semibold mb-2" style={{ color: COLORS.textMuted }}>
                   Bible References
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {verseRefs.map((ref, i) => (
                     <span 
                       key={i}
-                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium"
-                      style={{ backgroundColor: '#1a3a2a', color: '#faf7f2' }}
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold"
+                      style={{ backgroundColor: COLORS.softBlue, color: COLORS.cream }}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
@@ -1059,18 +1263,18 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
             {/* Tags */}
             {entry.tags?.length > 0 && (
               <div 
-                className="p-4 rounded-xl"
-                style={{ backgroundColor: '#fff', border: '1px solid #e8e0d5' }}
+                className="p-4 rounded-2xl"
+                style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
               >
-                <p className="text-sm font-medium mb-2" style={{ color: '#1a3a2a', opacity: 0.7 }}>
+                <p className="text-sm font-semibold mb-2" style={{ color: COLORS.textMuted }}>
                   Tags
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {entry.tags.map((tag, i) => (
                     <span 
                       key={i}
-                      className="px-3 py-1 rounded-full text-sm"
-                      style={{ backgroundColor: '#c9a84c', color: '#1a3a2a' }}
+                      className="px-3 py-1 rounded-full text-sm font-medium"
+                      style={{ backgroundColor: COLORS.rustyRed, color: COLORS.cream }}
                     >
                       {tag}
                     </span>
@@ -1082,13 +1286,13 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
             {/* Notes */}
             {entry.notes && (
               <div 
-                className="p-4 rounded-xl"
-                style={{ backgroundColor: '#fff', border: '1px solid #e8e0d5' }}
+                className="p-4 rounded-2xl"
+                style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
               >
-                <p className="text-sm font-medium mb-2" style={{ color: '#1a3a2a', opacity: 0.7 }}>
+                <p className="text-sm font-semibold mb-2" style={{ color: COLORS.textMuted }}>
                   Your Notes
                 </p>
-                <p style={{ color: '#1c1917' }}>
+                <p style={{ color: COLORS.textDark }}>
                   {entry.notes}
                 </p>
               </div>
@@ -1096,10 +1300,10 @@ const EntryDetail = ({ entry, onClose, onEdit }) => {
 
             {/* Date added */}
             <div 
-              className="p-4 rounded-xl"
-              style={{ backgroundColor: '#fff', border: '1px solid #e8e0d5' }}
+              className="p-4 rounded-2xl"
+              style={{ backgroundColor: COLORS.warmWhite, border: `2px solid ${COLORS.border}` }}
             >
-              <p className="text-sm" style={{ color: '#1c1917', opacity: 0.5 }}>
+              <p className="text-sm" style={{ color: COLORS.textMuted }}>
                 Added {new Date(entry.addedAt).toLocaleDateString('en-GB', { 
                   day: 'numeric', 
                   month: 'long', 
@@ -1241,13 +1445,13 @@ export default function App() {
     return (
       <div 
         className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: '#faf7f2' }}
+        style={{ backgroundColor: COLORS.cream }}
       >
-        <div 
-          className="w-16 h-16 rounded-full flex items-center justify-center animate-pulse"
-          style={{ backgroundColor: '#1a3a2a' }}
-        >
-          <span className="text-2xl" style={{ color: '#c9a84c' }}>R</span>
+        <div className="text-center">
+          <RegCharacter size={80} className="mx-auto animate-pulse" />
+          <p className="mt-4 text-sm" style={{ color: COLORS.textMuted }}>
+            Just a moment...
+          </p>
         </div>
       </div>
     );
@@ -1262,7 +1466,7 @@ export default function App() {
   return (
     <div 
       className="min-h-screen flex flex-col"
-      style={{ backgroundColor: '#faf7f2' }}
+      style={{ backgroundColor: COLORS.cream }}
     >
       <Header 
         user={user} 
