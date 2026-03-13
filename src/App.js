@@ -165,11 +165,54 @@ const REG_MESSAGES = {
     "No matches yet — shall we try another search?",
     "That's a tricky one! I've looked high and low but no luck.",
   ],
+  surprise: [
+    "Ah, I thought you might enjoy this one...",
+    "Here's a gem from your collection — remember this?",
+    "Let me pull something special off the shelf for you.",
+    "I've always been fond of this one.",
+    "Sometimes the right words find you at just the right moment.",
+  ],
 };
 
 const getRandomMessage = (type) => {
   const messages = REG_MESSAGES[type];
   return messages[Math.floor(Math.random() * messages.length)];
+};
+
+// CSV Export utility
+const exportToCSV = (entries, filename) => {
+  const escapeCSV = (str) => {
+    if (!str) return '""';
+    return '"' + String(str).replace(/"/g, '""') + '"';
+  };
+
+  const headers = ['Quote', 'Author', 'Source', 'Page', 'Notes', 'Bible References', 'Tags', 'Date Added'];
+  const rows = entries.map(entry => {
+    const verseRefs = (entry.verses || []).map(formatVerseRef).filter(Boolean).join(' | ');
+    const tags = (entry.tags || []).join(' | ');
+    const dateAdded = entry.addedAt ? new Date(entry.addedAt).toLocaleDateString('en-GB') : '';
+    return [
+      escapeCSV(entry.quote),
+      escapeCSV(entry.author),
+      escapeCSV(entry.source),
+      escapeCSV(entry.page),
+      escapeCSV(entry.notes),
+      escapeCSV(verseRefs),
+      escapeCSV(tags),
+      escapeCSV(dateAdded),
+    ].join(',');
+  });
+
+  const csvContent = [headers.map(h => escapeCSV(h)).join(','), ...rows].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 // Theme context
@@ -206,6 +249,41 @@ const useTheme = () => {
   
   return { themeMode, setThemeMode, resolvedTheme, colors };
 };
+
+// ============================================
+// ICONS (SVG components for nav bar)
+// ============================================
+
+const HomeIcon = ({ color, size = 24 }) => (
+  <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+  </svg>
+);
+
+const LibraryIcon = ({ color, size = 24 }) => (
+  <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+  </svg>
+);
+
+const SermonsIcon = ({ color, size = 24 }) => (
+  <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+  </svg>
+);
+
+const SettingsIcon = ({ color, size = 24 }) => (
+  <svg width={size} height={size} fill="none" stroke={color} strokeWidth="1.5" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+  </svg>
+);
+
+const PlusIcon = ({ color, size = 28 }) => (
+  <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2.5" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+  </svg>
+);
 
 // ============================================
 // COMPONENTS
@@ -287,8 +365,8 @@ const SignInScreen = ({ onSignIn, loading, colors }) => {
   );
 };
 
-// User Menu Component
-const UserMenu = ({ user, onSignOut, onOpenSettings, isOpen, onClose, colors }) => {
+// User Menu Component (simplified — sign out only)
+const UserMenu = ({ user, onSignOut, isOpen, onClose, colors }) => {
   if (!isOpen) return null;
   
   return (
@@ -302,24 +380,6 @@ const UserMenu = ({ user, onSignOut, onOpenSettings, isOpen, onClose, colors }) 
           <p className="font-medium text-sm" style={{ color: colors.text }}>{user?.displayName}</p>
           <p className="text-xs" style={{ color: colors.textMuted }}>{user?.email}</p>
         </div>
-        
-        <button
-          onClick={() => {
-            haptic();
-            onOpenSettings();
-            onClose();
-          }}
-          className="w-full px-4 py-3 text-left flex items-center gap-3 transition-colors text-sm"
-          style={{ color: colors.text }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.surfaceHover}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-          </svg>
-          Settings
-        </button>
         
         <button
           onClick={() => {
@@ -342,120 +402,8 @@ const UserMenu = ({ user, onSignOut, onOpenSettings, isOpen, onClose, colors }) 
   );
 };
 
-// Settings Modal
-const SettingsModal = ({ isOpen, onClose, themeMode, setThemeMode, colors }) => {
-  if (!isOpen) return null;
-
-  const themeOptions = [
-    { value: 'light', label: 'Light', icon: '☀️' },
-    { value: 'dark', label: 'Dark', icon: '🌙' },
-    { value: 'system', label: 'System', icon: '💻' },
-  ];
-
-  return (
-    <div 
-      className="fixed inset-0 z-50 flex flex-col"
-      style={{ backgroundColor: colors.background, fontFamily: 'Inter, system-ui, sans-serif' }}
-    >
-      {/* Header */}
-      <div 
-        className="flex items-center justify-between px-4 py-3 border-b"
-        style={{ backgroundColor: colors.headerBg, borderColor: colors.headerBorder }}
-      >
-        <button
-          onClick={() => {
-            haptic();
-            onClose();
-          }}
-          className="p-2 -ml-2 rounded-lg"
-          style={{ color: colors.text }}
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-          </svg>
-        </button>
-        <h2 className="text-lg font-semibold" style={{ color: colors.text }}>
-          Settings
-        </h2>
-        <div className="w-10" />
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-lg mx-auto p-4">
-          {/* Appearance section */}
-          <div className="mb-6">
-            <h3 
-              className="text-sm font-medium mb-3 px-1"
-              style={{ color: colors.textMuted }}
-            >
-              Appearance
-            </h3>
-            <div 
-              className="rounded-xl overflow-hidden"
-              style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
-            >
-              {themeOptions.map((option, index) => (
-                <button
-                  key={option.value}
-                  onClick={() => {
-                    haptic();
-                    setThemeMode(option.value);
-                  }}
-                  className="w-full px-4 py-3 flex items-center justify-between transition-colors"
-                  style={{ 
-                    borderTop: index > 0 ? `1px solid ${colors.border}` : 'none',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.surfaceHover}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">{option.icon}</span>
-                    <span style={{ color: colors.text }}>{option.label}</span>
-                  </div>
-                  {themeMode === option.value && (
-                    <svg className="w-5 h-5" fill={colors.blue} viewBox="0 0 24 24">
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                    </svg>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* About section */}
-          <div>
-            <h3 
-              className="text-sm font-medium mb-3 px-1"
-              style={{ color: colors.textMuted }}
-            >
-              About
-            </h3>
-            <div 
-              className="rounded-xl p-4"
-              style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-2xl">📖</span>
-                <div>
-                  <p className="font-semibold" style={{ color: colors.text }}>Reg</p>
-                  <p className="text-sm" style={{ color: colors.textMuted }}>Version 1.0.0</p>
-                </div>
-              </div>
-              <p className="text-sm" style={{ color: colors.textMuted }}>
-                A personal quote index for ministers and theology students. 
-                Save quotes, tag them to Bible verses, and find the right words when you need them.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Header Component
-const Header = ({ user, onSignOut, onAddEntry, onOpenSettings, colors }) => {
+// Header Component (simplified — logo + avatar only)
+const Header = ({ user, onSignOut, colors }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   
   return (
@@ -471,21 +419,7 @@ const Header = ({ user, onSignOut, onAddEntry, onOpenSettings, colors }) => {
           </h1>
         </div>
 
-        <div className="flex items-center gap-2 relative">
-          <button
-            onClick={() => {
-              haptic('success');
-              onAddEntry();
-            }}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:opacity-90 active:scale-95"
-            style={{ backgroundColor: colors.orange }}
-            aria-label="Add new entry"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="#ffffff" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-          </button>
-          
+        <div className="relative">
           <button
             onClick={() => {
               haptic();
@@ -505,7 +439,6 @@ const Header = ({ user, onSignOut, onAddEntry, onOpenSettings, colors }) => {
           <UserMenu 
             user={user}
             onSignOut={onSignOut}
-            onOpenSettings={onOpenSettings}
             isOpen={menuOpen}
             onClose={() => setMenuOpen(false)}
             colors={colors}
@@ -513,6 +446,71 @@ const Header = ({ user, onSignOut, onAddEntry, onOpenSettings, colors }) => {
         </div>
       </div>
     </header>
+  );
+};
+
+// Floating Navigation Bar
+const FloatingNavBar = ({ currentScreen, onNavigate, onAdd, colors }) => {
+  const navItems = [
+    { id: 'home', label: 'Home', Icon: HomeIcon },
+    { id: 'library', label: 'Library', Icon: LibraryIcon },
+    { id: 'add', label: 'Add', Icon: PlusIcon },
+    { id: 'sermons', label: 'Sermons', Icon: SermonsIcon },
+    { id: 'settings', label: 'Settings', Icon: SettingsIcon },
+  ];
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-6 pointer-events-none">
+      <nav 
+        className="flex items-center gap-1 px-4 py-2 rounded-full shadow-lg pointer-events-auto"
+        style={{ 
+          backgroundColor: colors.surface, 
+          boxShadow: `0 4px 20px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08)`,
+          border: `1px solid ${colors.border}`,
+        }}
+      >
+        {navItems.map(({ id, label, Icon }) => {
+          const isAdd = id === 'add';
+          const isActive = !isAdd && currentScreen === id;
+          const iconColor = isAdd ? colors.blue : isActive ? colors.blue : colors.textLight;
+          const iconSize = isAdd ? 28 : 22;
+
+          return (
+            <button
+              key={id}
+              onClick={() => {
+                haptic();
+                if (isAdd) {
+                  onAdd();
+                } else {
+                  onNavigate(id);
+                }
+              }}
+              className="flex flex-col items-center justify-center transition-all duration-200 active:scale-90"
+              style={{ 
+                width: isAdd ? 52 : 48, 
+                height: 48,
+                position: 'relative',
+              }}
+              aria-label={label}
+            >
+              <Icon color={iconColor} size={iconSize} />
+              {!isAdd && (
+                <span 
+                  className="text-xs mt-0.5 font-medium"
+                  style={{ 
+                    color: iconColor, 
+                    fontSize: '10px',
+                  }}
+                >
+                  {label}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
+    </div>
   );
 };
 
@@ -613,75 +611,177 @@ const EmptyState = ({ onAddEntry, hasSearch, colors }) => {
   );
 };
 
-// Entry Card Component
-const EntryCard = ({ entry, onClick, colors }) => {
+// Entry Card Component (with Add to Sermon button)
+const EntryCard = ({ entry, onClick, onAddToSermon, colors }) => {
   const verseRefs = entry.verses?.map(formatVerseRef).filter(Boolean).join(', ');
   
   return (
-    <button
-      onClick={() => {
-        haptic();
-        onClick();
-      }}
-      className="w-full text-left p-4 rounded-xl transition-all duration-200 hover:shadow-md active:scale-[0.99]"
+    <div
+      className="w-full text-left p-4 rounded-xl transition-all duration-200 hover:shadow-md"
       style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
     >
-      {/* Quote preview */}
-      <p 
-        className="text-base mb-3 line-clamp-3 leading-relaxed"
-        style={{ color: colors.text }}
+      <button
+        onClick={() => {
+          haptic();
+          onClick();
+        }}
+        className="w-full text-left"
       >
-        "{entry.quote}"
-      </p>
-      
-      {/* Author and source */}
-      <p className="text-sm mb-3" style={{ color: colors.textMuted }}>
-        — {entry.author}
-        {entry.source && <span>, {entry.source}</span>}
-      </p>
-      
-      {/* Tags row */}
-      <div className="flex flex-wrap gap-2">
-        {/* Verse references */}
-        {verseRefs && (
-          <span 
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
-            style={{ backgroundColor: colors.blueLight, color: colors.blue }}
-          >
-            {verseRefs}
-          </span>
-        )}
+        {/* Quote preview */}
+        <p 
+          className="text-base mb-3 line-clamp-3 leading-relaxed"
+          style={{ color: colors.text }}
+        >
+          "{entry.quote}"
+        </p>
         
-        {/* Tags */}
-        {entry.tags?.map((tag, i) => (
-          <span 
-            key={i}
-            className="px-2.5 py-1 rounded-full text-xs font-medium"
-            style={{ backgroundColor: colors.amberLight, color: colors.amber }}
+        {/* Author and source */}
+        <p className="text-sm mb-3" style={{ color: colors.textMuted }}>
+          — {entry.author}
+          {entry.source && <span>, {entry.source}</span>}
+        </p>
+      </button>
+      
+      {/* Tags row + sermon button */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2 flex-1 min-w-0">
+          {/* Verse references */}
+          {verseRefs && (
+            <span 
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+              style={{ backgroundColor: colors.blueLight, color: colors.blue }}
+            >
+              {verseRefs}
+            </span>
+          )}
+          
+          {/* Tags */}
+          {entry.tags?.map((tag, i) => (
+            <span 
+              key={i}
+              className="px-2.5 py-1 rounded-full text-xs font-medium"
+              style={{ backgroundColor: colors.amberLight, color: colors.amber }}
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        {/* Add to sermon button */}
+        {onAddToSermon && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              haptic();
+              onAddToSermon(entry);
+            }}
+            className="flex-shrink-0 p-1.5 rounded-lg transition-colors"
+            style={{ color: colors.textLight }}
+            onMouseEnter={(e) => e.currentTarget.style.color = colors.blue}
+            onMouseLeave={(e) => e.currentTarget.style.color = colors.textLight}
+            aria-label="Add to sermon"
+            title="Add to sermon"
           >
-            {tag}
-          </span>
-        ))}
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+            </svg>
+          </button>
+        )}
       </div>
-    </button>
+    </div>
   );
 };
 
-// Entry List Component
-const EntryList = ({ entries, onSelectEntry, searchQuery, onAddEntry, colors }) => {
+// Surprise Me / Random Quote overlay
+const SurpriseQuote = ({ entry, onAnother, onClose, colors }) => {
+  if (!entry) return null;
+
+  const verseRefs = entry.verses?.map(formatVerseRef).filter(Boolean).join(', ');
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6"
+      style={{ backgroundColor: colors.background, fontFamily: 'Inter, system-ui, sans-serif' }}
+    >
+      <div className="max-w-lg w-full">
+        {/* Reg's intro message */}
+        <p 
+          className="text-sm text-center mb-6 italic"
+          style={{ color: colors.textMuted }}
+        >
+          {getRandomMessage('surprise')}
+        </p>
+
+        {/* Quote card */}
+        <div 
+          className="p-8 rounded-2xl mb-8"
+          style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}`, boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}
+        >
+          <p 
+            className="text-xl leading-relaxed mb-6"
+            style={{ color: colors.text, fontStyle: 'italic' }}
+          >
+            "{entry.quote}"
+          </p>
+          
+          <p className="text-base mb-4" style={{ color: colors.textMuted }}>
+            — {entry.author}
+            {entry.source && <span>, {entry.source}</span>}
+          </p>
+
+          {verseRefs && (
+            <span 
+              className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium"
+              style={{ backgroundColor: colors.blueLight, color: colors.blue }}
+            >
+              {verseRefs}
+            </span>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex gap-3 justify-center">
+          <button
+            onClick={() => {
+              haptic();
+              onAnother();
+            }}
+            className="py-3 px-6 rounded-xl font-medium text-sm transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
+            style={{ backgroundColor: colors.blue, color: '#ffffff' }}
+          >
+            Show me another
+          </button>
+          <button
+            onClick={() => {
+              haptic();
+              onClose();
+            }}
+            className="py-3 px-6 rounded-xl font-medium text-sm transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
+            style={{ backgroundColor: colors.surface, color: colors.text, border: `1px solid ${colors.border}` }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Entry List Component (Home screen content)
+const EntryList = ({ entries, onSelectEntry, searchQuery, onAddEntry, onAddToSermon, onSurpriseMe, colors }) => {
   const filteredEntries = entries.filter(entry => {
     if (!searchQuery.trim()) return true;
     
-    const query = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase();
     
-    if (entry.quote?.toLowerCase().includes(query)) return true;
-    if (entry.author?.toLowerCase().includes(query)) return true;
-    if (entry.source?.toLowerCase().includes(query)) return true;
-    if (entry.notes?.toLowerCase().includes(query)) return true;
-    if (entry.tags?.some(tag => tag.toLowerCase().includes(query))) return true;
+    if (entry.quote?.toLowerCase().includes(q)) return true;
+    if (entry.author?.toLowerCase().includes(q)) return true;
+    if (entry.source?.toLowerCase().includes(q)) return true;
+    if (entry.notes?.toLowerCase().includes(q)) return true;
+    if (entry.tags?.some(tag => tag.toLowerCase().includes(q))) return true;
     if (entry.verses?.some(v => {
       const ref = formatVerseRef(v).toLowerCase();
-      return ref.includes(query);
+      return ref.includes(q);
     })) return true;
     
     return false;
@@ -696,13 +796,33 @@ const EntryList = ({ entries, onSelectEntry, searchQuery, onAddEntry, colors }) 
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-4">
+    <div className="flex-1 overflow-y-auto px-4 py-4" style={{ paddingBottom: '100px' }}>
       <div className="max-w-2xl mx-auto space-y-3">
+        {/* Surprise Me button — only when no search is active */}
+        {!searchQuery.trim() && entries.length > 0 && (
+          <button
+            onClick={() => {
+              haptic();
+              onSurpriseMe();
+            }}
+            className="w-full p-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 active:scale-[0.99]"
+            style={{ 
+              backgroundColor: colors.surface, 
+              border: `1px dashed ${colors.border}`,
+              color: colors.textMuted,
+            }}
+          >
+            <span className="text-lg">✨</span>
+            <span className="text-sm font-medium">Surprise me</span>
+          </button>
+        )}
+
         {filteredEntries.map(entry => (
           <EntryCard 
             key={entry.id} 
             entry={entry} 
             onClick={() => onSelectEntry(entry)}
+            onAddToSermon={onAddToSermon}
             colors={colors}
           />
         ))}
@@ -1135,7 +1255,7 @@ const EntryForm = ({ entry, onSave, onClose, onDelete, colors }) => {
 };
 
 // Entry Detail Modal
-const EntryDetail = ({ entry, onClose, onEdit, colors }) => {
+const EntryDetail = ({ entry, onClose, onEdit, onAddToSermon, colors }) => {
   const verseRefs = entry.verses?.map(formatVerseRef).filter(Boolean);
 
   return (
@@ -1165,20 +1285,35 @@ const EntryDetail = ({ entry, onClose, onEdit, colors }) => {
           Quote
         </h2>
         
-        <button
-          onClick={() => {
-            haptic();
-            onEdit();
-          }}
-          className="px-4 py-2 rounded-lg font-medium text-sm"
-          style={{ backgroundColor: colors.blue, color: '#ffffff' }}
-        >
-          Edit
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              haptic();
+              onAddToSermon(entry);
+            }}
+            className="p-2 rounded-lg"
+            style={{ color: colors.textMuted }}
+            aria-label="Add to sermon"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => {
+              haptic();
+              onEdit();
+            }}
+            className="px-4 py-2 rounded-lg font-medium text-sm"
+            style={{ backgroundColor: colors.blue, color: '#ffffff' }}
+          >
+            Edit
+          </button>
+        </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4" style={{ paddingBottom: '100px' }}>
         <div className="max-w-2xl mx-auto">
           {/* Quote card */}
           <div 
@@ -1292,6 +1427,1053 @@ const EntryDetail = ({ entry, onClose, onEdit, colors }) => {
 };
 
 // ============================================
+// LIBRARY SCREEN
+// ============================================
+
+// Filtered Entry List (drill-down from Library)
+const FilteredEntryList = ({ title, entries, onBack, onSelectEntry, onAddToSermon, colors }) => {
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex flex-col"
+      style={{ backgroundColor: colors.background, fontFamily: 'Inter, system-ui, sans-serif' }}
+    >
+      {/* Header */}
+      <div 
+        className="flex items-center justify-between px-4 py-3 border-b"
+        style={{ backgroundColor: colors.headerBg, borderColor: colors.headerBorder }}
+      >
+        <button
+          onClick={() => {
+            haptic();
+            onBack();
+          }}
+          className="p-2 -ml-2 rounded-lg"
+          style={{ color: colors.text }}
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
+        </button>
+        <h2 className="text-lg font-semibold" style={{ color: colors.text }}>
+          {title}
+        </h2>
+        <div className="w-10" />
+      </div>
+
+      {/* Entries */}
+      <div className="flex-1 overflow-y-auto p-4" style={{ paddingBottom: '100px' }}>
+        <div className="max-w-2xl mx-auto space-y-3">
+          {entries.length === 0 ? (
+            <div className="text-center py-12">
+              <p style={{ color: colors.textMuted }}>No quotes found here yet.</p>
+            </div>
+          ) : (
+            entries.map(entry => (
+              <EntryCard
+                key={entry.id}
+                entry={entry}
+                onClick={() => onSelectEntry(entry)}
+                onAddToSermon={onAddToSermon}
+                colors={colors}
+              />
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Library Screen
+const LibraryScreen = ({ entries, onSelectEntry, onAddToSermon, colors }) => {
+  const [drillDown, setDrillDown] = useState(null); // { type: 'book'|'author'|'source', value: string }
+
+  // Count quotes per Bible book
+  const bookCounts = {};
+  BIBLE_BOOKS.forEach(book => { bookCounts[book] = 0; });
+  entries.forEach(entry => {
+    (entry.verses || []).forEach(v => {
+      if (v.book && bookCounts.hasOwnProperty(v.book)) {
+        bookCounts[v.book]++;
+      }
+    });
+  });
+
+  // Unique authors sorted alphabetically
+  const authorCounts = {};
+  entries.forEach(entry => {
+    if (entry.author) {
+      authorCounts[entry.author] = (authorCounts[entry.author] || 0) + 1;
+    }
+  });
+  const sortedAuthors = Object.keys(authorCounts).sort((a, b) => a.localeCompare(b));
+
+  // Unique sources sorted alphabetically (only those with entries)
+  const sourceCounts = {};
+  entries.forEach(entry => {
+    if (entry.source) {
+      sourceCounts[entry.source] = (sourceCounts[entry.source] || 0) + 1;
+    }
+  });
+  const sortedSources = Object.keys(sourceCounts).sort((a, b) => a.localeCompare(b));
+
+  // Drill-down filtering
+  if (drillDown) {
+    let filtered = [];
+    let title = '';
+
+    if (drillDown.type === 'book') {
+      title = drillDown.value;
+      filtered = entries.filter(e => (e.verses || []).some(v => v.book === drillDown.value));
+    } else if (drillDown.type === 'author') {
+      title = drillDown.value;
+      filtered = entries.filter(e => e.author === drillDown.value);
+    } else if (drillDown.type === 'source') {
+      title = drillDown.value;
+      filtered = entries.filter(e => e.source === drillDown.value);
+    }
+
+    return (
+      <FilteredEntryList
+        title={title}
+        entries={filtered}
+        onBack={() => setDrillDown(null)}
+        onSelectEntry={onSelectEntry}
+        onAddToSermon={onAddToSermon}
+        colors={colors}
+      />
+    );
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto px-4 py-4" style={{ paddingBottom: '100px' }}>
+      <div className="max-w-2xl mx-auto">
+        {/* Bible Books section */}
+        <div className="mb-8">
+          <h3 
+            className="text-sm font-semibold uppercase tracking-wider mb-3 px-1"
+            style={{ color: colors.textMuted }}
+          >
+            Bible Books
+          </h3>
+          <div className="grid grid-cols-3 gap-2">
+            {BIBLE_BOOKS.map(book => {
+              const count = bookCounts[book];
+              const hasQuotes = count > 0;
+              return (
+                <button
+                  key={book}
+                  onClick={() => {
+                    if (hasQuotes) {
+                      haptic();
+                      setDrillDown({ type: 'book', value: book });
+                    }
+                  }}
+                  className="p-3 rounded-xl text-left transition-all duration-200"
+                  style={{ 
+                    backgroundColor: colors.surface, 
+                    border: `1px solid ${colors.border}`,
+                    opacity: hasQuotes ? 1 : 0.4,
+                    cursor: hasQuotes ? 'pointer' : 'default',
+                  }}
+                >
+                  <p 
+                    className="text-sm font-medium truncate"
+                    style={{ color: colors.text }}
+                  >
+                    {book}
+                  </p>
+                  <p 
+                    className="text-xs mt-0.5"
+                    style={{ color: hasQuotes ? colors.blue : colors.textLight }}
+                  >
+                    {count} {count === 1 ? 'quote' : 'quotes'}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Authors section */}
+        <div className="mb-8">
+          <h3 
+            className="text-sm font-semibold uppercase tracking-wider mb-3 px-1"
+            style={{ color: colors.textMuted }}
+          >
+            Authors
+          </h3>
+          {sortedAuthors.length === 0 ? (
+            <div 
+              className="p-4 rounded-xl text-center"
+              style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+            >
+              <p className="text-sm" style={{ color: colors.textMuted }}>
+                Authors will appear here as you add quotes.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {sortedAuthors.map(author => (
+                <button
+                  key={author}
+                  onClick={() => {
+                    haptic();
+                    setDrillDown({ type: 'author', value: author });
+                  }}
+                  className="w-full p-4 rounded-xl text-left flex items-center justify-between transition-all duration-200 hover:shadow-sm"
+                  style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+                >
+                  <p className="font-medium" style={{ color: colors.text }}>{author}</p>
+                  <span 
+                    className="text-sm px-2.5 py-0.5 rounded-full"
+                    style={{ backgroundColor: colors.blueLight, color: colors.blue }}
+                  >
+                    {authorCounts[author]}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Sources section */}
+        <div className="mb-8">
+          <h3 
+            className="text-sm font-semibold uppercase tracking-wider mb-3 px-1"
+            style={{ color: colors.textMuted }}
+          >
+            Sources
+          </h3>
+          {sortedSources.length === 0 ? (
+            <div 
+              className="p-4 rounded-xl text-center"
+              style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+            >
+              <p className="text-sm" style={{ color: colors.textMuted }}>
+                Sources will appear here as you add quotes.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {sortedSources.map(source => (
+                <button
+                  key={source}
+                  onClick={() => {
+                    haptic();
+                    setDrillDown({ type: 'source', value: source });
+                  }}
+                  className="w-full p-4 rounded-xl text-left flex items-center justify-between transition-all duration-200 hover:shadow-sm"
+                  style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+                >
+                  <p className="font-medium" style={{ color: colors.text }}>{source}</p>
+                  <span 
+                    className="text-sm px-2.5 py-0.5 rounded-full"
+                    style={{ backgroundColor: colors.blueLight, color: colors.blue }}
+                  >
+                    {sourceCounts[source]}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================
+// SERMON COMPONENTS
+// ============================================
+
+// Add to Sermon Picker (modal that appears when tapping bookmark icon)
+const AddToSermonPicker = ({ entry, sermons, onAddToSermon, onCreateSermon, onClose, colors }) => {
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-black bg-opacity-40" onClick={onClose} />
+      <div 
+        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[70vh] flex flex-col"
+        style={{ backgroundColor: colors.surface }}
+      >
+        {/* Handle */}
+        <div className="flex justify-center py-3">
+          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: colors.border }} />
+        </div>
+
+        <div className="px-4 pb-2">
+          <h3 className="text-lg font-semibold" style={{ color: colors.text }}>Add to sermon</h3>
+          <p className="text-sm mt-1" style={{ color: colors.textMuted }}>
+            Choose a sermon or create a new one
+          </p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 pb-6">
+          {/* Create new sermon */}
+          <button
+            onClick={() => {
+              haptic();
+              onCreateSermon(entry);
+            }}
+            className="w-full p-4 rounded-xl flex items-center gap-3 mb-3 transition-colors"
+            style={{ backgroundColor: colors.blueLight, border: `1px dashed ${colors.blue}` }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke={colors.blue} strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span className="font-medium" style={{ color: colors.blue }}>Create new sermon</span>
+          </button>
+
+          {/* Existing sermons */}
+          {sermons.length === 0 ? (
+            <p className="text-sm text-center py-4" style={{ color: colors.textMuted }}>
+              No sermons yet. Create one above!
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {sermons.map(sermon => {
+                const alreadyAdded = (sermon.quoteIds || []).includes(entry.id);
+                return (
+                  <button
+                    key={sermon.id}
+                    onClick={() => {
+                      if (!alreadyAdded) {
+                        haptic();
+                        onAddToSermon(sermon.id, entry.id);
+                      }
+                    }}
+                    disabled={alreadyAdded}
+                    className="w-full p-4 rounded-xl text-left flex items-center justify-between transition-colors"
+                    style={{ 
+                      backgroundColor: colors.surface, 
+                      border: `1px solid ${colors.border}`,
+                      opacity: alreadyAdded ? 0.6 : 1,
+                    }}
+                  >
+                    <div>
+                      <p className="font-medium" style={{ color: colors.text }}>{sermon.title}</p>
+                      {sermon.passage && (
+                        <p className="text-sm" style={{ color: colors.textMuted }}>{sermon.passage}</p>
+                      )}
+                    </div>
+                    {alreadyAdded && (
+                      <span className="text-xs font-medium px-2 py-1 rounded-full" style={{ backgroundColor: colors.blueLight, color: colors.blue }}>
+                        Added
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+};
+
+// Quote Picker for Sermon Detail (multi-select)
+const QuotePicker = ({ entries, selectedIds, onConfirm, onClose, colors }) => {
+  const [selected, setSelected] = useState(new Set(selectedIds));
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filtered = entries.filter(entry => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    if (entry.quote?.toLowerCase().includes(q)) return true;
+    if (entry.author?.toLowerCase().includes(q)) return true;
+    if (entry.source?.toLowerCase().includes(q)) return true;
+    if (entry.tags?.some(tag => tag.toLowerCase().includes(q))) return true;
+    if (entry.verses?.some(v => formatVerseRef(v).toLowerCase().includes(q))) return true;
+    return false;
+  });
+
+  const toggle = (id) => {
+    const next = new Set(selected);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setSelected(next);
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex flex-col"
+      style={{ backgroundColor: colors.background, fontFamily: 'Inter, system-ui, sans-serif' }}
+    >
+      {/* Header */}
+      <div 
+        className="flex items-center justify-between px-4 py-3 border-b"
+        style={{ backgroundColor: colors.headerBg, borderColor: colors.headerBorder }}
+      >
+        <button
+          onClick={() => {
+            haptic();
+            onClose();
+          }}
+          className="p-2 -ml-2 rounded-lg"
+          style={{ color: colors.text }}
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <h2 className="text-lg font-semibold" style={{ color: colors.text }}>
+          Add quotes
+        </h2>
+        <button
+          onClick={() => {
+            haptic('success');
+            onConfirm(Array.from(selected));
+          }}
+          className="px-4 py-2 rounded-lg font-medium text-sm"
+          style={{ backgroundColor: colors.blue, color: '#ffffff' }}
+        >
+          Done ({selected.size})
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="px-4 py-3" style={{ borderBottom: `1px solid ${colors.border}` }}>
+        <div 
+          className="flex items-center gap-3 px-4 py-2.5 rounded-xl"
+          style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+        >
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke={colors.textLight} strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search your quotes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 bg-transparent outline-none text-sm"
+            style={{ color: colors.text }}
+          />
+        </div>
+      </div>
+
+      {/* Quote list */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="max-w-2xl mx-auto space-y-2">
+          {filtered.map(entry => {
+            const isSelected = selected.has(entry.id);
+            return (
+              <button
+                key={entry.id}
+                onClick={() => {
+                  haptic();
+                  toggle(entry.id);
+                }}
+                className="w-full text-left p-4 rounded-xl flex items-start gap-3 transition-all duration-200"
+                style={{ 
+                  backgroundColor: isSelected ? colors.blueLight : colors.surface, 
+                  border: `1px solid ${isSelected ? colors.blue : colors.border}` 
+                }}
+              >
+                {/* Checkbox */}
+                <div 
+                  className="w-5 h-5 rounded flex-shrink-0 mt-0.5 flex items-center justify-center"
+                  style={{ 
+                    backgroundColor: isSelected ? colors.blue : 'transparent',
+                    border: `2px solid ${isSelected ? colors.blue : colors.border}`,
+                  }}
+                >
+                  {isSelected && (
+                    <svg className="w-3 h-3" fill="none" stroke="#ffffff" strokeWidth="3" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm line-clamp-2" style={{ color: colors.text }}>"{entry.quote}"</p>
+                  <p className="text-xs mt-1" style={{ color: colors.textMuted }}>— {entry.author}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Sermon Form (create/edit)
+const SermonForm = ({ sermon, onSave, onClose, onDelete, colors }) => {
+  const [title, setTitle] = useState(sermon?.title || '');
+  const [date, setDate] = useState(sermon?.date || '');
+  const [passage, setPassage] = useState(sermon?.passage || '');
+  const [notes, setNotes] = useState(sermon?.notes || '');
+  const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const isEditing = !!sermon?.id;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+    setSaving(true);
+    haptic('success');
+    await onSave({
+      title: title.trim(),
+      date: date.trim(),
+      passage: passage.trim(),
+      notes: notes.trim(),
+    });
+    setSaving(false);
+  };
+
+  const inputStyle = {
+    backgroundColor: colors.surface,
+    border: `1px solid ${colors.border}`,
+    color: colors.text,
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex flex-col"
+      style={{ backgroundColor: colors.background, fontFamily: 'Inter, system-ui, sans-serif' }}
+    >
+      <div 
+        className="flex items-center justify-between px-4 py-3 border-b"
+        style={{ backgroundColor: colors.headerBg, borderColor: colors.headerBorder }}
+      >
+        <button
+          onClick={() => { haptic(); onClose(); }}
+          className="p-2 -ml-2 rounded-lg"
+          style={{ color: colors.text }}
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <h2 className="text-lg font-semibold" style={{ color: colors.text }}>
+          {isEditing ? 'Edit sermon' : 'New sermon'}
+        </h2>
+        <button
+          onClick={handleSubmit}
+          disabled={saving || !title.trim()}
+          className="px-4 py-2 rounded-lg font-medium text-sm transition-opacity disabled:opacity-50"
+          style={{ backgroundColor: colors.blue, color: '#ffffff' }}
+        >
+          {saving ? 'Saving...' : 'Save'}
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-4 space-y-5">
+          <div>
+            <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>Title *</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Sermon title"
+              required
+              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2 focus:ring-blue-500"
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>Date</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2 focus:ring-blue-500"
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>Passage</label>
+            <input
+              type="text"
+              value={passage}
+              onChange={(e) => setPassage(e.target.value)}
+              placeholder="e.g. Romans 8:18-30"
+              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2 focus:ring-blue-500"
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>Notes</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Your sermon notes..."
+              rows={4}
+              className="w-full px-4 py-3 rounded-xl text-base outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              style={inputStyle}
+            />
+          </div>
+
+          {isEditing && onDelete && (
+            <div className="pt-4 border-t" style={{ borderColor: colors.border }}>
+              {showDeleteConfirm ? (
+                <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: '#fef2f2' }}>
+                  <p className="text-sm text-center font-medium" style={{ color: '#991b1b' }}>
+                    Are you sure? This will delete the sermon and unlink all quotes.
+                  </p>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => setShowDeleteConfirm(false)}
+                      className="flex-1 py-3 rounded-xl font-medium text-sm"
+                      style={{ backgroundColor: colors.surface, color: colors.text, border: `1px solid ${colors.border}` }}>
+                      Cancel
+                    </button>
+                    <button type="button" onClick={() => { haptic('success'); onDelete(); }}
+                      className="flex-1 py-3 rounded-xl font-medium text-sm text-white"
+                      style={{ backgroundColor: '#ef4444' }}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button type="button" onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full py-3 rounded-xl font-medium text-sm transition-colors"
+                  style={{ backgroundColor: '#fef2f2', color: '#ef4444' }}>
+                  Delete sermon
+                </button>
+              )}
+            </div>
+          )}
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Sermon Detail Screen
+const SermonDetail = ({ sermon, entries, allEntries, onBack, onUpdateSermon, onDeleteSermon, onSelectEntry, onAddToSermon, colors }) => {
+  const [showQuotePicker, setShowQuotePicker] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+
+  // Get the actual entry objects for this sermon's quoteIds
+  const sermonEntries = (sermon.quoteIds || [])
+    .map(id => allEntries.find(e => e.id === id))
+    .filter(Boolean);
+
+  const handleRemoveQuote = async (entryId) => {
+    haptic();
+    const newQuoteIds = (sermon.quoteIds || []).filter(id => id !== entryId);
+    await onUpdateSermon(sermon.id, { quoteIds: newQuoteIds });
+  };
+
+  const handleQuotePickerConfirm = async (selectedIds) => {
+    await onUpdateSermon(sermon.id, { quoteIds: selectedIds });
+    setShowQuotePicker(false);
+  };
+
+  const handleEditSave = async (data) => {
+    await onUpdateSermon(sermon.id, data);
+    setShowEditForm(false);
+  };
+
+  const handleExport = () => {
+    haptic('success');
+    const safeTitle = sermon.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+    const dateStr = new Date().toISOString().split('T')[0];
+    exportToCSV(sermonEntries, `reg-sermon-${safeTitle}-${dateStr}.csv`);
+  };
+
+  if (showEditForm) {
+    return (
+      <SermonForm
+        sermon={sermon}
+        onSave={handleEditSave}
+        onClose={() => setShowEditForm(false)}
+        onDelete={onDeleteSermon ? () => onDeleteSermon(sermon.id) : null}
+        colors={colors}
+      />
+    );
+  }
+
+  if (showQuotePicker) {
+    return (
+      <QuotePicker
+        entries={allEntries}
+        selectedIds={sermon.quoteIds || []}
+        onConfirm={handleQuotePickerConfirm}
+        onClose={() => setShowQuotePicker(false)}
+        colors={colors}
+      />
+    );
+  }
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex flex-col"
+      style={{ backgroundColor: colors.background, fontFamily: 'Inter, system-ui, sans-serif' }}
+    >
+      {/* Header */}
+      <div 
+        className="flex items-center justify-between px-4 py-3 border-b"
+        style={{ backgroundColor: colors.headerBg, borderColor: colors.headerBorder }}
+      >
+        <button
+          onClick={() => { haptic(); onBack(); }}
+          className="p-2 -ml-2 rounded-lg"
+          style={{ color: colors.text }}
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
+        </button>
+        <h2 className="text-lg font-semibold" style={{ color: colors.text }}>Sermon</h2>
+        <button
+          onClick={() => { haptic(); setShowEditForm(true); }}
+          className="px-4 py-2 rounded-lg font-medium text-sm"
+          style={{ backgroundColor: colors.blue, color: '#ffffff' }}
+        >
+          Edit
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4" style={{ paddingBottom: '100px' }}>
+        <div className="max-w-2xl mx-auto">
+          {/* Sermon info card */}
+          <div 
+            className="p-5 rounded-xl mb-4"
+            style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+          >
+            <h3 className="text-xl font-semibold mb-2" style={{ color: colors.text }}>
+              {sermon.title}
+            </h3>
+            {sermon.date && (
+              <p className="text-sm mb-1" style={{ color: colors.textMuted }}>
+                {new Date(sermon.date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+            )}
+            {sermon.passage && (
+              <span 
+                className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium mt-1"
+                style={{ backgroundColor: colors.blueLight, color: colors.blue }}
+              >
+                {sermon.passage}
+              </span>
+            )}
+            {sermon.notes && (
+              <p className="text-sm mt-3 leading-relaxed" style={{ color: colors.text }}>
+                {sermon.notes}
+              </p>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => { haptic(); setShowQuotePicker(true); }}
+              className="flex-1 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+              style={{ backgroundColor: colors.blueLight, color: colors.blue }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Add quotes
+            </button>
+            {sermonEntries.length > 0 && (
+              <button
+                onClick={handleExport}
+                className="py-3 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+                style={{ backgroundColor: colors.surface, color: colors.text, border: `1px solid ${colors.border}` }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Export
+              </button>
+            )}
+          </div>
+
+          {/* Gathered quotes */}
+          <h4 
+            className="text-sm font-semibold uppercase tracking-wider mb-3 px-1"
+            style={{ color: colors.textMuted }}
+          >
+            Quotes ({sermonEntries.length})
+          </h4>
+
+          {sermonEntries.length === 0 ? (
+            <div 
+              className="p-6 rounded-xl text-center"
+              style={{ backgroundColor: colors.surface, border: `1px dashed ${colors.border}` }}
+            >
+              <p className="text-sm" style={{ color: colors.textMuted }}>
+                No quotes gathered yet. Tap "Add quotes" to start building your sermon.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {sermonEntries.map(entry => (
+                <div key={entry.id} className="relative">
+                  <EntryCard
+                    entry={entry}
+                    onClick={() => onSelectEntry(entry)}
+                    onAddToSermon={onAddToSermon}
+                    colors={colors}
+                  />
+                  {/* Remove from sermon button */}
+                  <button
+                    onClick={() => handleRemoveQuote(entry.id)}
+                    className="absolute top-2 right-2 p-1.5 rounded-full transition-colors"
+                    style={{ backgroundColor: colors.surface, color: colors.textLight, border: `1px solid ${colors.border}` }}
+                    title="Remove from sermon"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Sermons Screen (list of sermons)
+const SermonsScreen = ({ sermons, entries, onCreateSermon, onUpdateSermon, onDeleteSermon, onSelectEntry, onAddToSermon, colors }) => {
+  const [selectedSermon, setSelectedSermon] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+
+  // Keep selectedSermon in sync with sermons array (so updates reflect immediately)
+  const currentSermon = selectedSermon ? sermons.find(s => s.id === selectedSermon.id) || selectedSermon : null;
+
+  const handleCreateSave = async (data) => {
+    await onCreateSermon(data);
+    setShowForm(false);
+  };
+
+  const handleDelete = async (sermonId) => {
+    await onDeleteSermon(sermonId);
+    setSelectedSermon(null);
+  };
+
+  if (showForm) {
+    return (
+      <SermonForm
+        sermon={null}
+        onSave={handleCreateSave}
+        onClose={() => setShowForm(false)}
+        colors={colors}
+      />
+    );
+  }
+
+  if (currentSermon) {
+    return (
+      <SermonDetail
+        sermon={currentSermon}
+        entries={entries}
+        allEntries={entries}
+        onBack={() => setSelectedSermon(null)}
+        onUpdateSermon={onUpdateSermon}
+        onDeleteSermon={handleDelete}
+        onSelectEntry={onSelectEntry}
+        onAddToSermon={onAddToSermon}
+        colors={colors}
+      />
+    );
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto px-4 py-4" style={{ paddingBottom: '100px' }}>
+      <div className="max-w-2xl mx-auto">
+        {/* Create button */}
+        <button
+          onClick={() => { haptic(); setShowForm(true); }}
+          className="w-full p-4 rounded-xl flex items-center justify-center gap-2 mb-4 transition-colors"
+          style={{ backgroundColor: colors.blueLight, border: `1px dashed ${colors.blue}`, color: colors.blue }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span className="font-medium">New sermon</span>
+        </button>
+
+        {/* Sermons list */}
+        {sermons.length === 0 ? (
+          <div className="text-center py-12">
+            <div 
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 mx-auto"
+              style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+            >
+              <SermonsIcon color={colors.textLight} size={32} />
+            </div>
+            <h3 className="text-lg font-semibold mb-2" style={{ color: colors.text }}>
+              No sermons yet
+            </h3>
+            <p className="text-sm max-w-xs mx-auto" style={{ color: colors.textMuted }}>
+              Create a sermon to start gathering quotes for your next message.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {sermons.map(sermon => {
+              const quoteCount = (sermon.quoteIds || []).length;
+              return (
+                <button
+                  key={sermon.id}
+                  onClick={() => { haptic(); setSelectedSermon(sermon); }}
+                  className="w-full text-left p-4 rounded-xl transition-all duration-200 hover:shadow-sm"
+                  style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+                >
+                  <p className="font-semibold mb-1" style={{ color: colors.text }}>{sermon.title}</p>
+                  <div className="flex items-center gap-3 text-sm" style={{ color: colors.textMuted }}>
+                    {sermon.date && (
+                      <span>{new Date(sermon.date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    )}
+                    {sermon.passage && (
+                      <span 
+                        className="px-2 py-0.5 rounded-full text-xs font-medium"
+                        style={{ backgroundColor: colors.blueLight, color: colors.blue }}
+                      >
+                        {sermon.passage}
+                      </span>
+                    )}
+                    <span>{quoteCount} {quoteCount === 1 ? 'quote' : 'quotes'}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ============================================
+// SETTINGS SCREEN
+// ============================================
+
+const SettingsScreen = ({ themeMode, setThemeMode, entries, colors }) => {
+  const themeOptions = [
+    { value: 'light', label: 'Light', icon: '☀️' },
+    { value: 'dark', label: 'Dark', icon: '🌙' },
+    { value: 'system', label: 'System', icon: '💻' },
+  ];
+
+  const handleExportAll = () => {
+    haptic('success');
+    const dateStr = new Date().toISOString().split('T')[0];
+    exportToCSV(entries, `reg-export-${dateStr}.csv`);
+  };
+
+  return (
+    <div className="flex-1 overflow-y-auto" style={{ paddingBottom: '100px' }}>
+      <div className="max-w-lg mx-auto p-4">
+        {/* Appearance section */}
+        <div className="mb-6">
+          <h3 
+            className="text-sm font-medium mb-3 px-1"
+            style={{ color: colors.textMuted }}
+          >
+            Appearance
+          </h3>
+          <div 
+            className="rounded-xl overflow-hidden"
+            style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+          >
+            {themeOptions.map((option, index) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  haptic();
+                  setThemeMode(option.value);
+                }}
+                className="w-full px-4 py-3 flex items-center justify-between transition-colors"
+                style={{ 
+                  borderTop: index > 0 ? `1px solid ${colors.border}` : 'none',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.surfaceHover}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">{option.icon}</span>
+                  <span style={{ color: colors.text }}>{option.label}</span>
+                </div>
+                {themeMode === option.value && (
+                  <svg className="w-5 h-5" fill={colors.blue} viewBox="0 0 24 24">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Data section */}
+        <div className="mb-6">
+          <h3 
+            className="text-sm font-medium mb-3 px-1"
+            style={{ color: colors.textMuted }}
+          >
+            Data
+          </h3>
+          <div 
+            className="rounded-xl overflow-hidden"
+            style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+          >
+            <button
+              onClick={handleExportAll}
+              disabled={entries.length === 0}
+              className="w-full px-4 py-3 flex items-center gap-3 transition-colors disabled:opacity-50"
+              style={{ color: colors.text }}
+              onMouseEnter={(e) => { if (entries.length > 0) e.currentTarget.style.backgroundColor = colors.surfaceHover; }}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              <div className="text-left">
+                <p className="font-medium text-sm">Export all quotes</p>
+                <p className="text-xs" style={{ color: colors.textMuted }}>
+                  Download {entries.length} {entries.length === 1 ? 'quote' : 'quotes'} as CSV
+                </p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* About section */}
+        <div>
+          <h3 
+            className="text-sm font-medium mb-3 px-1"
+            style={{ color: colors.textMuted }}
+          >
+            About
+          </h3>
+          <div 
+            className="rounded-xl p-4"
+            style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-2xl">📖</span>
+              <div>
+                <p className="font-semibold" style={{ color: colors.text }}>Reg</p>
+                <p className="text-sm" style={{ color: colors.textMuted }}>Version 2.0.0</p>
+              </div>
+            </div>
+            <p className="text-sm" style={{ color: colors.textMuted }}>
+              A personal quote index for ministers and theology students. 
+              Save quotes, tag them to Bible verses, and find the right words when you need them.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================
 // MAIN APP COMPONENT
 // ============================================
 
@@ -1301,11 +2483,21 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [entries, setEntries] = useState([]);
+  const [sermons, setSermons] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
-  const [showSettings, setShowSettings] = useState(false);
+  const [currentScreen, setCurrentScreen] = useState('home');
+  
+  // Surprise me state
+  const [surpriseEntry, setSurpriseEntry] = useState(null);
+
+  // Add to sermon picker state
+  const [sermonPickerEntry, setSermonPickerEntry] = useState(null);
+  // When creating a new sermon from the picker, hold the entry to add after creation
+  const [pendingSermonEntry, setPendingSermonEntry] = useState(null);
+  const [showNewSermonFromPicker, setShowNewSermonFromPicker] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -1315,9 +2507,9 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  // Fetch entries
   const fetchEntries = useCallback(async () => {
     if (!user) return;
-
     try {
       const q = query(
         collection(db, 'reg-entries'),
@@ -1335,9 +2527,30 @@ export default function App() {
     }
   }, [user]);
 
+  // Fetch sermons
+  const fetchSermons = useCallback(async () => {
+    if (!user) return;
+    try {
+      const q = query(
+        collection(db, 'reg-sermons'),
+        where('userId', '==', user.uid),
+        orderBy('createdAt', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      const fetchedSermons = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setSermons(fetchedSermons);
+    } catch (error) {
+      console.error('Error fetching sermons:', error);
+    }
+  }, [user]);
+
   useEffect(() => {
     fetchEntries();
-  }, [fetchEntries]);
+    fetchSermons();
+  }, [fetchEntries, fetchSermons]);
 
   const handleSignIn = async () => {
     setAuthLoading(true);
@@ -1353,6 +2566,8 @@ export default function App() {
     try {
       await signOut(auth);
       setEntries([]);
+      setSermons([]);
+      setCurrentScreen('home');
     } catch (error) {
       console.error('Sign out error:', error);
     }
@@ -1360,7 +2575,6 @@ export default function App() {
 
   const handleSaveEntry = async (entryData) => {
     if (!user) return;
-
     try {
       if (editingEntry?.id) {
         await updateDoc(doc(db, 'reg-entries', editingEntry.id), entryData);
@@ -1371,7 +2585,6 @@ export default function App() {
           userId: user.uid,
         });
       }
-      
       await fetchEntries();
       setShowForm(false);
       setEditingEntry(null);
@@ -1383,7 +2596,6 @@ export default function App() {
 
   const handleDeleteEntry = async () => {
     if (!editingEntry?.id) return;
-
     try {
       await deleteDoc(doc(db, 'reg-entries', editingEntry.id));
       await fetchEntries();
@@ -1395,6 +2607,74 @@ export default function App() {
     }
   };
 
+  // Sermon CRUD
+  const handleCreateSermon = async (data) => {
+    if (!user) return;
+    try {
+      const newDoc = await addDoc(collection(db, 'reg-sermons'), {
+        ...data,
+        quoteIds: [],
+        userId: user.uid,
+        createdAt: new Date().toISOString(),
+      });
+      await fetchSermons();
+      return newDoc.id;
+    } catch (error) {
+      console.error('Error creating sermon:', error);
+    }
+  };
+
+  const handleUpdateSermon = async (sermonId, data) => {
+    try {
+      await updateDoc(doc(db, 'reg-sermons', sermonId), data);
+      await fetchSermons();
+    } catch (error) {
+      console.error('Error updating sermon:', error);
+    }
+  };
+
+  const handleDeleteSermon = async (sermonId) => {
+    try {
+      await deleteDoc(doc(db, 'reg-sermons', sermonId));
+      await fetchSermons();
+    } catch (error) {
+      console.error('Error deleting sermon:', error);
+    }
+  };
+
+  // Add entry to a specific sermon
+  const handleAddEntryToSermon = async (sermonId, entryId) => {
+    const sermon = sermons.find(s => s.id === sermonId);
+    if (!sermon) return;
+    const newQuoteIds = [...(sermon.quoteIds || [])];
+    if (!newQuoteIds.includes(entryId)) {
+      newQuoteIds.push(entryId);
+      await handleUpdateSermon(sermonId, { quoteIds: newQuoteIds });
+    }
+    setSermonPickerEntry(null);
+  };
+
+  // "Add to sermon" flow: opens picker
+  const openSermonPicker = (entry) => {
+    setSermonPickerEntry(entry);
+  };
+
+  // "Create new sermon" from picker: opens sermon form, remembers the entry to add
+  const handleCreateSermonFromPicker = (entry) => {
+    setSermonPickerEntry(null);
+    setPendingSermonEntry(entry);
+    setShowNewSermonFromPicker(true);
+  };
+
+  const handleSaveNewSermonFromPicker = async (data) => {
+    const newId = await handleCreateSermon(data);
+    if (newId && pendingSermonEntry) {
+      await handleAddEntryToSermon(newId, pendingSermonEntry.id);
+    }
+    setShowNewSermonFromPicker(false);
+    setPendingSermonEntry(null);
+  };
+
   const openAddForm = () => {
     setEditingEntry(null);
     setShowForm(true);
@@ -1403,6 +2683,22 @@ export default function App() {
   const openEditForm = () => {
     setEditingEntry(selectedEntry);
     setShowForm(true);
+  };
+
+  // Surprise me
+  const handleSurpriseMe = () => {
+    if (entries.length === 0) return;
+    const randomIndex = Math.floor(Math.random() * entries.length);
+    setSurpriseEntry(entries[randomIndex]);
+  };
+
+  const handleSurpriseAnother = () => {
+    if (entries.length <= 1) return;
+    let randomIndex;
+    do {
+      randomIndex = Math.floor(Math.random() * entries.length);
+    } while (entries.length > 1 && entries[randomIndex].id === surpriseEntry?.id);
+    setSurpriseEntry(entries[randomIndex]);
   };
 
   if (loading) {
@@ -1433,30 +2729,76 @@ export default function App() {
       <Header 
         user={user} 
         onSignOut={handleSignOut} 
-        onAddEntry={openAddForm}
-        onOpenSettings={() => setShowSettings(true)}
         colors={colors}
       />
       
-      <SearchBar 
-        searchQuery={searchQuery} 
-        setSearchQuery={setSearchQuery}
+      {/* Screen content */}
+      {currentScreen === 'home' && (
+        <>
+          <SearchBar 
+            searchQuery={searchQuery} 
+            setSearchQuery={setSearchQuery}
+            colors={colors}
+          />
+          <EntryList 
+            entries={entries}
+            searchQuery={searchQuery}
+            onSelectEntry={setSelectedEntry}
+            onAddEntry={openAddForm}
+            onAddToSermon={openSermonPicker}
+            onSurpriseMe={handleSurpriseMe}
+            colors={colors}
+          />
+        </>
+      )}
+
+      {currentScreen === 'library' && (
+        <LibraryScreen
+          entries={entries}
+          onSelectEntry={setSelectedEntry}
+          onAddToSermon={openSermonPicker}
+          colors={colors}
+        />
+      )}
+
+      {currentScreen === 'sermons' && (
+        <SermonsScreen
+          sermons={sermons}
+          entries={entries}
+          onCreateSermon={handleCreateSermon}
+          onUpdateSermon={handleUpdateSermon}
+          onDeleteSermon={handleDeleteSermon}
+          onSelectEntry={setSelectedEntry}
+          onAddToSermon={openSermonPicker}
+          colors={colors}
+        />
+      )}
+
+      {currentScreen === 'settings' && (
+        <SettingsScreen
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+          entries={entries}
+          colors={colors}
+        />
+      )}
+
+      {/* Floating nav bar */}
+      <FloatingNavBar
+        currentScreen={currentScreen}
+        onNavigate={setCurrentScreen}
+        onAdd={openAddForm}
         colors={colors}
       />
-      
-      <EntryList 
-        entries={entries}
-        searchQuery={searchQuery}
-        onSelectEntry={setSelectedEntry}
-        onAddEntry={openAddForm}
-        colors={colors}
-      />
+
+      {/* Modals / Overlays */}
 
       {selectedEntry && !showForm && (
         <EntryDetail
           entry={selectedEntry}
           onClose={() => setSelectedEntry(null)}
           onEdit={openEditForm}
+          onAddToSermon={openSermonPicker}
           colors={colors}
         />
       )}
@@ -1474,12 +2816,34 @@ export default function App() {
         />
       )}
 
-      {showSettings && (
-        <SettingsModal
-          isOpen={showSettings}
-          onClose={() => setShowSettings(false)}
-          themeMode={themeMode}
-          setThemeMode={setThemeMode}
+      {surpriseEntry && (
+        <SurpriseQuote
+          entry={surpriseEntry}
+          onAnother={handleSurpriseAnother}
+          onClose={() => setSurpriseEntry(null)}
+          colors={colors}
+        />
+      )}
+
+      {sermonPickerEntry && (
+        <AddToSermonPicker
+          entry={sermonPickerEntry}
+          sermons={sermons}
+          onAddToSermon={handleAddEntryToSermon}
+          onCreateSermon={handleCreateSermonFromPicker}
+          onClose={() => setSermonPickerEntry(null)}
+          colors={colors}
+        />
+      )}
+
+      {showNewSermonFromPicker && (
+        <SermonForm
+          sermon={null}
+          onSave={handleSaveNewSermonFromPicker}
+          onClose={() => {
+            setShowNewSermonFromPicker(false);
+            setPendingSermonEntry(null);
+          }}
           colors={colors}
         />
       )}
