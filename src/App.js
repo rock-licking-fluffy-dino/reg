@@ -153,7 +153,7 @@ const formatVerseRef = (verse) => {
   return ref;
 };
 
-// Reg's encouraging messages
+// Quotary's encouraging messages
 const REG_MESSAGES = {
   emptyState: [
     "Every great library begins with a single quote. What wisdom shall we preserve first?",
@@ -309,7 +309,7 @@ const SignInScreen = ({ onSignIn, loading, colors }) => {
             className="text-3xl font-semibold mb-2"
             style={{ color: colors.text }}
           >
-            Reg
+            Quotary
           </h1>
           <p style={{ color: colors.textMuted }}>
             Your personal quote companion
@@ -415,7 +415,7 @@ const Header = ({ user, onSignOut, colors }) => {
         <div className="flex items-center gap-2">
           <span className="text-2xl">📖</span>
           <h1 className="text-xl font-semibold" style={{ color: colors.text }}>
-            Reg
+            Quotary
           </h1>
         </div>
 
@@ -495,17 +495,6 @@ const FloatingNavBar = ({ currentScreen, onNavigate, onAdd, colors }) => {
               aria-label={label}
             >
               <Icon color={iconColor} size={iconSize} />
-              {!isAdd && (
-                <span 
-                  className="text-xs mt-0.5 font-medium"
-                  style={{ 
-                    color: iconColor, 
-                    fontSize: '10px',
-                  }}
-                >
-                  {label}
-                </span>
-              )}
             </button>
           );
         })}
@@ -704,7 +693,7 @@ const SurpriseQuote = ({ entry, onAnother, onClose, colors }) => {
       style={{ backgroundColor: colors.background, fontFamily: 'Inter, system-ui, sans-serif' }}
     >
       <div className="max-w-lg w-full">
-        {/* Reg's intro message */}
+        {/* Quotary's intro message */}
         <p 
           className="text-sm text-center mb-6 italic"
           style={{ color: colors.textMuted }}
@@ -2458,7 +2447,7 @@ const SettingsScreen = ({ themeMode, setThemeMode, entries, colors }) => {
             <div className="flex items-center gap-3 mb-3">
               <span className="text-2xl">📖</span>
               <div>
-                <p className="font-semibold" style={{ color: colors.text }}>Reg</p>
+                <p className="font-semibold" style={{ color: colors.text }}>Quotary</p>
                 <p className="text-sm" style={{ color: colors.textMuted }}>Version 2.0.0</p>
               </div>
             </div>
