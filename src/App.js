@@ -831,12 +831,10 @@ const PhotoScanModal = ({ onExtracted, onClose, colors }) => {
       });
       if (!response.ok) {
         let errorMessage = `API error ${response.status}`;
-        try {
-          const err = await response.json();
-          errorMessage = err.error?.message || errorMessage;
-        } catch {
-          const text = await response.text();
-          if (text) errorMessage = text;
+        const text = await response.text();
+        if (text) {
+          try { errorMessage = JSON.parse(text).error?.message || errorMessage; }
+          catch { errorMessage = text; }
         }
         throw new Error(errorMessage);
       }
