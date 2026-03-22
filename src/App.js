@@ -759,6 +759,25 @@ const TagInput = ({ tags, setTags, colors }) => {
 // PHOTO SCAN MODAL — extract highlighted text from a photo
 // ============================================
 
+const compressImage = (dataUrl) => new Promise((resolve) => {
+  const img = new Image();
+  img.onload = () => {
+    const MAX = 1568;
+    let { width, height } = img;
+    if (width > MAX || height > MAX) {
+      if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+      else { width = Math.round(width * MAX / height); height = MAX; }
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+    const compressed = canvas.toDataURL('image/jpeg', 0.85);
+    const data = compressed.split(',')[1];
+    resolve({ data, type: 'image/jpeg' });
+  };
+  img.src = dataUrl;
+});
+
 const PhotoScanModal = ({ onExtracted, onClose, colors }) => {
   const [imageData, setImageData] = useState(null);
   const [imageType, setImageType] = useState(null);
@@ -789,6 +808,7 @@ const PhotoScanModal = ({ onExtracted, onClose, colors }) => {
     if (!imageData) return;
     setScanning(true);
     setError(null);
+    const { data: compressedData, type: compressedType } = await compressImage(`data:${imageType};base64,${imageData}`);
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -804,7 +824,7 @@ const PhotoScanModal = ({ onExtracted, onClose, colors }) => {
           messages: [{
             role: 'user',
             content: [
-              { type: 'image', source: { type: 'base64', media_type: imageType, data: imageData } },
+              { type: 'image', source: { type: 'base64', media_type: compressedType, data: compressedData } },
               { type: 'text', text: 'This is a photo of a page from a book. The reader has physically highlighted text with a highlighter pen. Please extract ONLY the highlighted text, exactly as written. Return just the text with no commentary, quotation marks, or explanation. If multiple passages are highlighted, separate them with a blank line. If no highlighted text is clearly visible, respond with exactly: NO_HIGHLIGHTS_FOUND' }
             ]
           }]
