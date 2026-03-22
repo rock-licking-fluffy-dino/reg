@@ -756,6 +756,130 @@ const TagInput = ({ tags, setTags, colors }) => {
 };
 
 // ============================================
+// PHOTO SCAN MODAL — extract highlighted text from a photo
+// ============================================
+
+const PhotoScanModal = ({ onExtracted, onClose, colors }) => {
+  const [imageData, setImageData] = useState(null);
+  const [imageType, setImageType] = useState(null);
+  const [scanning, setScanning] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = ev.target.result;
+      const [header, data] = result.split(',');
+      const type = header.match(/:(.*?);/)[1];
+      setImageData(data);
+      setImageType(type);
+      setError(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleScan = async () => {
+    const apiKey = localStorage.getItem('reg-anthropic-key');
+    if (!apiKey) {
+      setError('No Anthropic API key set. Please add your key in Settings first.');
+      return;
+    }
+    if (!imageData) return;
+    setScanning(true);
+    setError(null);
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+          'anthropic-dangerous-direct-browser-calls': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1024,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: imageType, data: imageData } },
+              { type: 'text', text: 'This is a photo of a page from a book. The reader has physically highlighted text with a highlighter pen. Please extract ONLY the highlighted text, exactly as written. Return just the text with no commentary, quotation marks, or explanation. If multiple passages are highlighted, separate them with a blank line. If no highlighted text is clearly visible, respond with exactly: NO_HIGHLIGHTS_FOUND' }
+            ]
+          }]
+        })
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || `API error ${response.status}`);
+      }
+      const result = await response.json();
+      const text = result.content[0]?.text?.trim();
+      if (!text || text === 'NO_HIGHLIGHTS_FOUND') {
+        setError('No highlighted text detected. Try a clearer photo with visible highlighting.');
+      } else {
+        onExtracted(text);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to scan. Check your API key and try again.');
+    }
+    setScanning(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex flex-col" style={{ backgroundColor: colors.background, fontFamily: FONTS.sans }}>
+      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ backgroundColor: colors.headerBg, borderColor: colors.headerBorder }}>
+        <button onClick={onClose} className="p-2 -ml-2 rounded-lg" style={{ color: colors.text }}>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <h2 style={{ color: colors.text, fontFamily: FONTS.serif, fontWeight: 400, fontSize: '1.125rem' }}>Scan highlights</h2>
+        <div className="w-10" />
+      </div>
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="max-w-lg mx-auto space-y-5">
+          <p className="text-sm" style={{ color: colors.textMuted, fontWeight: 400 }}>Take a photo of a page where you've highlighted text. The highlighted passages will be extracted automatically.</p>
+          {!imageData ? (
+            <label className="flex flex-col items-center justify-center w-full p-10 rounded-xl border-2 border-dashed cursor-pointer"
+              style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
+              <input type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
+              <svg className="w-10 h-10 mb-3" fill="none" stroke={colors.textLight} strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+              </svg>
+              <p className="text-sm" style={{ color: colors.text, fontWeight: 500 }}>Take a photo or choose an image</p>
+              <p className="text-xs mt-1" style={{ color: colors.textMuted, fontWeight: 400 }}>Tap to open camera</p>
+            </label>
+          ) : (
+            <div className="space-y-3">
+              <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${colors.border}` }}>
+                <img src={`data:${imageType};base64,${imageData}`} alt="Page to scan" className="w-full h-auto max-h-72 object-contain" style={{ backgroundColor: colors.surface }} />
+              </div>
+              <button type="button" onClick={() => { setImageData(null); setImageType(null); setError(null); }}
+                className="text-sm" style={{ color: colors.accent, fontWeight: 500 }}>Use a different photo</button>
+            </div>
+          )}
+          {error && (
+            <div className="p-4 rounded-xl" style={{ backgroundColor: colors.dangerBg }}>
+              <p className="text-sm" style={{ color: colors.danger, fontWeight: 400 }}>{error}</p>
+            </div>
+          )}
+          {imageData && (
+            <button type="button" onClick={handleScan} disabled={scanning}
+              className="w-full py-3 rounded-xl text-sm disabled:opacity-50"
+              style={{ backgroundColor: colors.accent, color: '#ffffff', fontWeight: 500 }}>
+              {scanning ? 'Scanning for highlights...' : 'Extract highlighted text'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================
 // ENTRY FORM — add or edit a quote
 // ============================================
 
@@ -769,6 +893,7 @@ const EntryForm = ({ entry, onSave, onClose, onDelete, colors }) => {
   const [tags, setTags] = useState(entry?.tags || []);
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPhotoScan, setShowPhotoScan] = useState(false);
   const isEditing = !!entry?.id;
   const updateVerse = (index, nv) => { const v = [...verses]; v[index] = nv; setVerses(v); };
 
@@ -797,8 +922,28 @@ const EntryForm = ({ entry, onSave, onClose, onDelete, colors }) => {
       </div>
       <div className="flex-1 overflow-y-auto">
         <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-4 space-y-5">
-          <div><label className="block mb-2" style={labelStyle}>Quote *</label>
-            <textarea value={quote} onChange={(e) => setQuote(e.target.value)} placeholder="Enter the quote..." rows={4} required className="w-full px-4 py-3 rounded-xl text-base outline-none resize-none" style={inputStyle} /></div>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label style={labelStyle}>Quote *</label>
+              <button type="button" onClick={() => { haptic(); setShowPhotoScan(true); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs"
+                style={{ backgroundColor: colors.accentLight, color: colors.accent, fontWeight: 500 }}>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                </svg>
+                Scan highlights
+              </button>
+            </div>
+            <textarea value={quote} onChange={(e) => setQuote(e.target.value)} placeholder="Enter the quote..." rows={4} required className="w-full px-4 py-3 rounded-xl text-base outline-none resize-none" style={inputStyle} />
+          </div>
+          {showPhotoScan && (
+            <PhotoScanModal
+              colors={colors}
+              onClose={() => setShowPhotoScan(false)}
+              onExtracted={(text) => { setQuote(text); setShowPhotoScan(false); }}
+            />
+          )}
           <div><label className="block mb-2" style={labelStyle}>Author *</label>
             <input type="text" value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Who said this?" required className="w-full px-4 py-3 rounded-xl text-base outline-none" style={inputStyle} /></div>
           <div><label className="block mb-2" style={labelStyle}>Source</label>
@@ -1250,6 +1395,13 @@ const SettingsScreen = ({ themeMode, setThemeMode, entries, colors }) => {
   const themeOptions = [{ value: 'light', label: 'Light', icon: '☀️' }, { value: 'dark', label: 'Dark', icon: '🌙' }, { value: 'system', label: 'System', icon: '💻' }];
   const handleExport = () => { haptic('success'); exportToCSV(entries, `reg-export-${new Date().toISOString().split('T')[0]}.csv`); };
   const sectionStyle = { color: colors.textMuted, fontFamily: FONTS.sans, fontWeight: 500, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' };
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('reg-anthropic-key') || '');
+  const [apiKeySaved, setApiKeySaved] = useState(false);
+  const handleSaveApiKey = () => {
+    const trimmed = apiKey.trim();
+    if (trimmed) { localStorage.setItem('reg-anthropic-key', trimmed); } else { localStorage.removeItem('reg-anthropic-key'); }
+    haptic('success'); setApiKeySaved(true); setTimeout(() => setApiKeySaved(false), 2000);
+  };
 
   return (
     <div className="flex-1 overflow-y-auto" style={{ paddingBottom: '100px' }}>
@@ -1280,6 +1432,25 @@ const SettingsScreen = ({ themeMode, setThemeMode, entries, colors }) => {
                 <p className="text-sm" style={{ color: colors.text, fontWeight: 500 }}>Export all quotes</p>
                 <p className="text-xs" style={{ color: colors.textMuted, fontWeight: 400 }}>Download {entries.length} {entries.length === 1 ? 'quote' : 'quotes'} as CSV</p>
               </div>
+            </button>
+          </div>
+        </div>
+        <div className="mb-6">
+          <h3 className="mb-3 px-1" style={sectionStyle}>AI features</h3>
+          <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}>
+            <p className="text-sm" style={{ color: colors.textMuted, fontWeight: 400 }}>Add your Anthropic API key to use the photo highlight scanner. Your key is stored locally on this device only.</p>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => { setApiKey(e.target.value); setApiKeySaved(false); }}
+              placeholder="sk-ant-..."
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+              style={{ backgroundColor: colors.background, border: `1px solid ${colors.border}`, color: colors.text, fontFamily: FONTS.sans, fontWeight: 400 }}
+            />
+            <button onClick={handleSaveApiKey}
+              className="w-full py-2.5 rounded-xl text-sm"
+              style={{ backgroundColor: apiKeySaved ? colors.verdigrisLight : colors.accentLight, color: apiKeySaved ? colors.verdigris : colors.accent, fontWeight: 500 }}>
+              {apiKeySaved ? 'Saved' : 'Save API key'}
             </button>
           </div>
         </div>
