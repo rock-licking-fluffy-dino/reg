@@ -883,7 +883,7 @@ const PhotoScanModal = ({ onExtracted, onClose, colors }) => {
 // ENTRY FORM — add or edit a quote
 // ============================================
 
-const EntryForm = ({ entry, onSave, onClose, onDelete, colors }) => {
+const EntryForm = ({ entry, onSave, onSaveAndContinue, onClose, onDelete, colors }) => {
   const [quote, setQuote] = useState(entry?.quote || '');
   const [author, setAuthor] = useState(entry?.author || '');
   const [source, setSource] = useState(entry?.source || '');
@@ -909,7 +909,7 @@ const EntryForm = ({ entry, onSave, onClose, onDelete, colors }) => {
   const handleSaveAnother = async () => {
     if (!quote.trim() || !author.trim()) return;
     setSavingAnother(true); haptic('success');
-    await onSave({ quote: quote.trim(), author: author.trim(), source: source.trim(), page: page.trim(), notes: notes.trim(), verses: verses.filter(v => v.book), tags });
+    await onSaveAndContinue({ quote: quote.trim(), author: author.trim(), source: source.trim(), page: page.trim(), notes: notes.trim(), verses: verses.filter(v => v.book), tags });
     setSavingAnother(false);
     setSavedAnother(true);
     setQuote('');
@@ -1514,6 +1514,12 @@ export default function App() {
       await fetchEntries(); setShowForm(false); setEditingEntry(null); setSelectedEntry(null); } catch (e) { console.error('Error saving entry:', e); }
   };
 
+  const handleSaveEntryAndContinue = async (data) => {
+    if (!user) return;
+    try { await addDoc(collection(db, 'reg-entries'), { ...data, addedAt: new Date().toISOString(), userId: user.uid });
+      await fetchEntries(); } catch (e) { console.error('Error saving entry:', e); }
+  };
+
   const handleDeleteEntry = async () => {
     if (!editingEntry?.id) return;
     try { await deleteDoc(doc(db, 'reg-entries', editingEntry.id)); await fetchEntries(); setShowForm(false); setEditingEntry(null); setSelectedEntry(null); } catch (e) { console.error('Error deleting entry:', e); }
@@ -1575,7 +1581,7 @@ export default function App() {
       <FloatingNavBar currentScreen={currentScreen} onNavigate={setCurrentScreen} onAdd={openAddForm} colors={colors} />
 
       {selectedEntry && !showForm && <EntryDetail entry={selectedEntry} onClose={() => setSelectedEntry(null)} onEdit={openEditForm} onAddToSermon={openSermonPicker} colors={colors} />}
-      {showForm && <EntryForm entry={editingEntry} onSave={handleSaveEntry} onClose={() => { setShowForm(false); setEditingEntry(null); }} onDelete={handleDeleteEntry} colors={colors} />}
+      {showForm && <EntryForm entry={editingEntry} onSave={handleSaveEntry} onSaveAndContinue={handleSaveEntryAndContinue} onClose={() => { setShowForm(false); setEditingEntry(null); }} onDelete={handleDeleteEntry} colors={colors} />}
       {surpriseEntry && <SurpriseQuote entry={surpriseEntry} onAnother={handleSurpriseAnother} onClose={() => setSurpriseEntry(null)} colors={colors} />}
       {sermonPickerEntry && <AddToSermonPicker entry={sermonPickerEntry} sermons={sermons} onAddToSermon={handleAddEntryToSermon} onCreateSermon={handleCreateSermonFromPicker} onClose={() => setSermonPickerEntry(null)} colors={colors} />}
       {showNewSermonFromPicker && <SermonForm sermon={null} onSave={handleSaveNewSermonFromPicker} onClose={() => { setShowNewSermonFromPicker(false); setPendingSermonEntry(null); }} colors={colors} />}
