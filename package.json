@@ -22,7 +22,6 @@
       "react-app"
     ]
   },
-  "proxy": "https://api.anthropic.com",
   "browserslist": {
     "production": [
       ">0.2%",

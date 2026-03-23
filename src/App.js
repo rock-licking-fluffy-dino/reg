@@ -782,6 +782,7 @@ const PhotoScanModal = ({ onExtracted, onClose, colors }) => {
   const [imageData, setImageData] = useState(null);
   const [imageType, setImageType] = useState(null);
   const [scanning, setScanning] = useState(false);
+  const [scanStatus, setScanStatus] = useState('');
   const [error, setError] = useState(null);
 
   const handleFileChange = (e) => {
@@ -800,55 +801,30 @@ const PhotoScanModal = ({ onExtracted, onClose, colors }) => {
   };
 
   const handleScan = async () => {
-    const apiKey = localStorage.getItem('reg-anthropic-key');
-    if (!apiKey) {
-      setError('No Anthropic API key set. Please add your key in Settings first.');
-      return;
-    }
     if (!imageData) return;
     setScanning(true);
+    setScanStatus('Loading text recognition...');
     setError(null);
-    const { data: compressedData, type: compressedType } = await compressImage(`data:${imageType};base64,${imageData}`);
     try {
-      const response = await fetch('/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
+      const { data: compressedData, type: compressedType } = await compressImage(`data:${imageType};base64,${imageData}`);
+      const worker = await window.Tesseract.createWorker('eng', 1, {
+        logger: (m) => {
+          if (m.status === 'recognizing text') setScanStatus('Scanning...');
         },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1024,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: compressedType, data: compressedData } },
-              { type: 'text', text: 'This is a photo of a page from a book. The reader has physically highlighted text with a highlighter pen. Please extract ONLY the highlighted text, exactly as written. Return just the text with no commentary, quotation marks, or explanation. If multiple passages are highlighted, separate them with a blank line. If no highlighted text is clearly visible, respond with exactly: NO_HIGHLIGHTS_FOUND' }
-            ]
-          }]
-        })
       });
-      if (!response.ok) {
-        let errorMessage = `API error ${response.status}`;
-        const text = await response.text();
-        if (text) {
-          try { errorMessage = JSON.parse(text).error?.message || errorMessage; }
-          catch { errorMessage = text; }
-        }
-        throw new Error(errorMessage);
-      }
-      const result = await response.json();
-      const text = result.content[0]?.text?.trim();
-      if (!text || text === 'NO_HIGHLIGHTS_FOUND') {
-        setError('No highlighted text detected. Try a clearer photo with visible highlighting.');
+      const { data: { text } } = await worker.recognize(`data:${compressedType};base64,${compressedData}`);
+      await worker.terminate();
+      const trimmed = text.trim();
+      if (!trimmed) {
+        setError('No text detected. Try a clearer photo or better lighting.');
       } else {
-        onExtracted(text);
+        onExtracted(trimmed);
       }
     } catch (err) {
-      setError(err.message || 'Failed to scan. Check your API key and try again.');
+      setError(err.message || 'Failed to scan. Please try again.');
     }
     setScanning(false);
+    setScanStatus('');
   };
 
   return (
@@ -859,12 +835,12 @@ const PhotoScanModal = ({ onExtracted, onClose, colors }) => {
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
           </svg>
         </button>
-        <h2 style={{ color: colors.text, fontFamily: FONTS.serif, fontWeight: 400, fontSize: '1.125rem' }}>Scan highlights</h2>
+        <h2 style={{ color: colors.text, fontFamily: FONTS.serif, fontWeight: 400, fontSize: '1.125rem' }}>Scan photo</h2>
         <div className="w-10" />
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         <div className="max-w-lg mx-auto space-y-5">
-          <p className="text-sm" style={{ color: colors.textMuted, fontWeight: 400 }}>Take a photo of a page where you've highlighted text. The highlighted passages will be extracted automatically.</p>
+          <p className="text-sm" style={{ color: colors.textMuted, fontWeight: 400 }}>Text from your photo will be extracted — crop to just the passage you want for best results.</p>
           {!imageData ? (
             <label className="flex flex-col items-center justify-center w-full p-10 rounded-xl border-2 border-dashed cursor-pointer"
               style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
@@ -894,7 +870,7 @@ const PhotoScanModal = ({ onExtracted, onClose, colors }) => {
             <button type="button" onClick={handleScan} disabled={scanning}
               className="w-full py-3 rounded-xl text-sm disabled:opacity-50"
               style={{ backgroundColor: colors.accent, color: '#ffffff', fontWeight: 500 }}>
-              {scanning ? 'Scanning for highlights...' : 'Extract highlighted text'}
+              {scanning ? (scanStatus || 'Scanning...') : 'Extract text from photo'}
             </button>
           )}
         </div>
@@ -916,6 +892,8 @@ const EntryForm = ({ entry, onSave, onClose, onDelete, colors }) => {
   const [verses, setVerses] = useState(entry?.verses?.length ? entry.verses : [{ book: null, chapter: null, verse: null }]);
   const [tags, setTags] = useState(entry?.tags || []);
   const [saving, setSaving] = useState(false);
+  const [savingAnother, setSavingAnother] = useState(false);
+  const [savedAnother, setSavedAnother] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPhotoScan, setShowPhotoScan] = useState(false);
   const isEditing = !!entry?.id;
@@ -926,6 +904,19 @@ const EntryForm = ({ entry, onSave, onClose, onDelete, colors }) => {
     setSaving(true); haptic('success');
     await onSave({ quote: quote.trim(), author: author.trim(), source: source.trim(), page: page.trim(), notes: notes.trim(), verses: verses.filter(v => v.book), tags });
     setSaving(false);
+  };
+
+  const handleSaveAnother = async () => {
+    if (!quote.trim() || !author.trim()) return;
+    setSavingAnother(true); haptic('success');
+    await onSave({ quote: quote.trim(), author: author.trim(), source: source.trim(), page: page.trim(), notes: notes.trim(), verses: verses.filter(v => v.book), tags });
+    setSavingAnother(false);
+    setSavedAnother(true);
+    setQuote('');
+    setPage('');
+    setNotes('');
+    setVerses([{ book: null, chapter: null, verse: null }]);
+    setTimeout(() => setSavedAnother(false), 1500);
   };
 
   const inputStyle = { backgroundColor: colors.surface, border: `1px solid ${colors.border}`, color: colors.text, fontFamily: FONTS.sans, fontWeight: 400 };
@@ -992,6 +983,16 @@ const EntryForm = ({ entry, onSave, onClose, onDelete, colors }) => {
           <div><label className="block mb-2" style={labelStyle}>Tags</label><TagInput tags={tags} setTags={setTags} colors={colors} /></div>
           <div><label className="block mb-2" style={labelStyle}>Notes</label>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Your own thoughts on this quote..." rows={3} className="w-full px-4 py-3 rounded-xl text-base outline-none resize-none" style={inputStyle} /></div>
+          {!isEditing && (
+            <div className="pt-2">
+              <button type="button" onClick={handleSaveAnother}
+                disabled={savingAnother || savedAnother || !quote.trim() || !author.trim()}
+                className="w-full py-3.5 rounded-xl text-sm transition-opacity disabled:opacity-50"
+                style={{ backgroundColor: savedAnother ? colors.verdigrisLight : colors.accentLight, color: savedAnother ? colors.verdigris : colors.accent, fontWeight: 500 }}>
+                {savedAnother ? 'Saved!' : savingAnother ? 'Saving...' : 'Save & add another'}
+              </button>
+            </div>
+          )}
           {isEditing && (
             <div className="pt-4 border-t" style={{ borderColor: colors.border }}>
               {showDeleteConfirm ? (
@@ -1419,13 +1420,6 @@ const SettingsScreen = ({ themeMode, setThemeMode, entries, colors }) => {
   const themeOptions = [{ value: 'light', label: 'Light', icon: '☀️' }, { value: 'dark', label: 'Dark', icon: '🌙' }, { value: 'system', label: 'System', icon: '💻' }];
   const handleExport = () => { haptic('success'); exportToCSV(entries, `reg-export-${new Date().toISOString().split('T')[0]}.csv`); };
   const sectionStyle = { color: colors.textMuted, fontFamily: FONTS.sans, fontWeight: 500, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' };
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('reg-anthropic-key') || '');
-  const [apiKeySaved, setApiKeySaved] = useState(false);
-  const handleSaveApiKey = () => {
-    const trimmed = apiKey.trim();
-    if (trimmed) { localStorage.setItem('reg-anthropic-key', trimmed); } else { localStorage.removeItem('reg-anthropic-key'); }
-    haptic('success'); setApiKeySaved(true); setTimeout(() => setApiKeySaved(false), 2000);
-  };
 
   return (
     <div className="flex-1 overflow-y-auto" style={{ paddingBottom: '100px' }}>
@@ -1456,25 +1450,6 @@ const SettingsScreen = ({ themeMode, setThemeMode, entries, colors }) => {
                 <p className="text-sm" style={{ color: colors.text, fontWeight: 500 }}>Export all quotes</p>
                 <p className="text-xs" style={{ color: colors.textMuted, fontWeight: 400 }}>Download {entries.length} {entries.length === 1 ? 'quote' : 'quotes'} as CSV</p>
               </div>
-            </button>
-          </div>
-        </div>
-        <div className="mb-6">
-          <h3 className="mb-3 px-1" style={sectionStyle}>AI features</h3>
-          <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}>
-            <p className="text-sm" style={{ color: colors.textMuted, fontWeight: 400 }}>Add your Anthropic API key to use the photo highlight scanner. Your key is stored locally on this device only.</p>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => { setApiKey(e.target.value); setApiKeySaved(false); }}
-              placeholder="sk-ant-..."
-              className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-              style={{ backgroundColor: colors.background, border: `1px solid ${colors.border}`, color: colors.text, fontFamily: FONTS.sans, fontWeight: 400 }}
-            />
-            <button onClick={handleSaveApiKey}
-              className="w-full py-2.5 rounded-xl text-sm"
-              style={{ backgroundColor: apiKeySaved ? colors.verdigrisLight : colors.accentLight, color: apiKeySaved ? colors.verdigris : colors.accent, fontWeight: 500 }}>
-              {apiKeySaved ? 'Saved' : 'Save API key'}
             </button>
           </div>
         </div>
