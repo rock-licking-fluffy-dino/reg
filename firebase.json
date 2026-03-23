@@ -8,16 +8,9 @@
     ],
     "rewrites": [
       {
-        "source": "/v1/messages",
-        "function": "anthropicProxy"
-      },
-      {
         "source": "**",
         "destination": "/index.html"
       }
     ]
-  },
-  "functions": {
-    "source": "functions"
   }
 }
